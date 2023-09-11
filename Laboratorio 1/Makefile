@@ -8,3 +8,6 @@ run2: dilation
 
 dilation:
 	gcc -o dilation dilation.c
+
+clean:
+	rm -f *.o dilation imagen_salida1.pgm imagen_salida2.pgm
