@@ -33,8 +33,8 @@ void dilateSIMD(const unsigned char* inputImage, unsigned char* outputImage, int
 
             if (k == max_value) {
                 // Cargar los píxeles vecinos en registros SIMD
-                R0 = _mm_loadu_si128((__m128i*)r0); // Centro
-                R1 = _mm_loadu_si128((__m128i*)r1); // Arriba
+                R0 = _mm_loadu_si128((__m128i*)r0); 
+                R1 = _mm_loadu_si128((__m128i*)r1);
                 R2 = _mm_loadu_si128((__m128i*)r2);
                 R3 = _mm_loadu_si128((__m128i*)r3);
                 R4 = _mm_loadu_si128((__m128i*)r4);
