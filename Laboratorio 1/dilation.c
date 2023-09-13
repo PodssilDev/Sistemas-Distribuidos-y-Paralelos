@@ -1,7 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "funciones.h"
 
+/*
+Laboratorio 1 - Sistemas Distribuidos y Paralelos 13329 2-2023
+Autor: John Serrano Carrasco
+*/
 
 int main(int argc, char *argv[])
 {
@@ -10,11 +15,10 @@ int main(int argc, char *argv[])
     char *sequentialOutputFileName = NULL;
     char *simdOutputFileName = NULL;
     int width = 0;
-    int opt;
+    int opt, height1, weight1, maxValue;
     char type[3];
-    int height1;
-    int weight1;
-    int maxValue;
+    unsigned t0_s, t1_s, t0_p, t1_p;
+    double time_s, time_p;
 
     // Se procesan parametros usando getopt
     while ((opt = getopt(argc, argv, "i:s:p:N:")) != -1)
@@ -47,17 +51,7 @@ int main(int argc, char *argv[])
     }
 
     // See lee la imágen de entrada desde un archivo PGM binario (formato P5)
-    FILE *inputFile = fopen(inputFileName, "rb");
-    if (inputFile == NULL)
-    {
-        perror("Error al abrir el archivo de entrada");
-        exit(EXIT_FAILURE);
-    }
-    // Se lee información sobre la imágen
-    fscanf(inputFile, "%s", type);
-    fscanf(inputFile, "%d\n", &weight1);
-    fscanf(inputFile, "%d\n", &height1);
-    fscanf(inputFile, "%d\n", &maxValue);
+    FILE *inputFile = readInput(inputFileName, type, weight1, height1, maxValue);
 
     // Se crea la variable que contendrá los pixeles de la imágen de entrada
     unsigned char *inputImage = (unsigned char *)malloc(width * width);
@@ -70,10 +64,18 @@ int main(int argc, char *argv[])
     unsigned char *simdOutputImage = (unsigned char *)malloc(width * width);
 
     // Se realiza la dilatación de forma secuencial
+    t0_s = clock(); // Inicio del cálculo del tiempo de ejecución
     sequentialDilation(inputImage, sequentialOutputImage, width, width);
+    t1_s = clock(); // Fin del cálculo del tiempo de ejecución
+    time_s = (double)(t1_s - t0_s) / CLOCKS_PER_SEC; // Cálculo del tiempo de ejecución
+    printf("Tiempo secuencial: %f[s]\n", time_s);
 
     // Se realiza la dilatación de forma paralela
+    t0_p = clock(); // Inicio del cálculo del tiempo de ejecución
     parallelDilation(inputImage, simdOutputImage, width, width);
+    t1_p = clock(); // Fin del cálculo del tiempo de ejecución
+    time_p = (double)(t1_p - t0_p) / CLOCKS_PER_SEC; // Cálculo del tiempo de ejecución
+    printf("Tiempo paralelo: %f[s]\n", time_p);
 
     // Se crean las imágenes de salida
     writeOutput(sequentialOutputFileName, sequentialOutputImage, width, width);

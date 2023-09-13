@@ -1,13 +1,18 @@
 #include "funciones.h"
 
 /*
+Laboratorio 1 - Sistemas Distribuidos y Paralelos 13329 2-2023
+Autor: John Serrano Carrasco
+*/
+
+/*
 Entrada: 
     - inputImage: imagen de entrada, de tipo unsigned char *
     - outputImage: imagen de salida, de tipo unsigned char *
     - width: ancho de la imagen, de tipo integer
     - height: alto de la imagen, de tipo integer
-Salida: ninguna (void)
-Descripción: función para realizar la dilatación de la imagen de forma paralela, utilizando SIMD.
+Salida: Ninguna (void)
+Descripción: Función para realizar la dilatación de la imagen de forma paralela, utilizando SIMD.
 Para ello, se utiliza la función _mm_max_epu8() que permite realizar la operación de máximo entre dos 
 registros SIMD. La información de la imágen de entrada inicialmente se carga en arreglos y luego se 
 cargan en registros SIMD. Se guarda el resultado en la imagen de salida, cuya variable es outputImage.
@@ -77,8 +82,8 @@ Entrada:
     - outputImage: imagen de salida, de tipo unsigned char *
     - width: ancho de la imagen, de tipo integer
     - height: alto de la imagen, de tipo integer
-Salida: ninguna (void)
-Descripción: función para realizar la dilatación de la imagen de forma secuencial.
+Salida: Ninguna (void)
+Descripción: Función para realizar la dilatación de la imagen de forma secuencial.
 Para ello, se recorre la imagen de entrada y se obtiene el máximo de los píxeles vecinos.
 Se guarda el resultado en la imagen de salida, cuya variable es outputImage.
 */
@@ -116,12 +121,44 @@ void sequentialDilation(const unsigned char *inputImage, unsigned char *outputIm
 
 /*
 Entrada: 
+    - inputFileName: nombre del archivo de entrada, de tipo char *
+    - type: tipo de la imagen, de tipo char *
+    - weight: ancho de la imagen, de tipo integer
+    - height: alto de la imagen, de tipo integer
+    - maxValue: valor máximo de la imagen, de tipo integer
+Salida: Puntero al archivo de entrada, de tipo FILE *
+Descripción: Función para leer la imagen de entrada desde un archivo PGM binario (formato P5).
+Si no se puede abrir el archivo, se muestra un mensaje de error y se aborta el programa.
+*/
+FILE* readInput(char *inputFileName, char *type, int weight, int height, int maxValue){
+    // Se abre el archivo de entrada
+    FILE *inputFile = fopen(inputFileName, "rb");
+    if (inputFile == NULL){ // Se verifica que el archivo se haya creado correctamente
+        perror("Error al abrir el archivo de entrada");
+        exit(EXIT_FAILURE);
+    }
+    else{ // Si el archivo se abrió correctamente, se leen los detalles de la imágen
+        printf("Nombre de la Imágen: %s\n", inputFileName);
+        fscanf(inputFile, "%s", type);
+        printf("Tipo de la Imágen: %s\n", type);
+        fscanf(inputFile, "%d\n", &weight);
+        printf("Ancho de la Imágen: %d\n", weight);
+        fscanf(inputFile, "%d\n", &height);
+        printf("Alto de la Imágen: %d\n", height);
+        fscanf(inputFile, "%d\n", &maxValue);
+        printf("Valor máximo de la Imágen (0 - 255): %d\n", maxValue);
+        return inputFile;
+    }
+}
+
+/*
+Entrada: 
     - nameOutputFile: nombre del archivo de salida, de tipo char *
     - outputImage: imagen de salida, de tipo unsigned char *
     - width: ancho de la imagen, de tipo integer
     - height: alto de la imagen, de tipo integer
-Salida: ninguna (void)
-Descripción: función para escribir la imagen de salida en un archivo PGM binario (formato P5).
+Salida: Ninguna (void)
+Descripción: Función para escribir la imagen de salida en un archivo PGM binario (formato P5).
 */ 
 void writeOutput(char *nameOutputFile, unsigned char *outputImage, int width, int height){
     // Se crea el archivo de salida
