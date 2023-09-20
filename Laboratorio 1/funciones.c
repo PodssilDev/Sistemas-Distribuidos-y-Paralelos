@@ -90,6 +90,7 @@ Se guarda el resultado en la imagen de salida, cuya variable es outputImage.
 void sequentialDilation(const unsigned char *inputImage, unsigned char *outputImage, int width, int height){
     // Declaración de variables
     int i, j;
+    unsigned char pixelUp, pixel, pixelRight, pixelLeft, pixelDown;
     // Se recorre la imagen de entrada desde i = 1 y j = 1 para evitar los bordes
     for (i = 1; i < height - 1; i++)
     {
@@ -97,22 +98,30 @@ void sequentialDilation(const unsigned char *inputImage, unsigned char *outputIm
         {
             // Se declara la variable maxPixel, donde se guardará el pixel de mayor valor
             unsigned char maxPixel = 0;
-
-            // Se recorre desde -1 hasta 1 para obtener los píxeles vecinos
-            for (int m = -1; m <= 1; m++)
-            {
-                for (int n = -1; n <= 1; n++)
+            unsigned char pixelArray[5];
+            // Se calcula el pixel del centro
+            pixel = inputImage[(i * width + j)];
+            pixelArray[0] = pixel;
+            // Se calcula el pixel de arriba
+            pixelUp = inputImage[((i - 1) * width + j)];
+            pixelArray[1] = pixelUp;
+            // Se calcula el pixel de abajo
+            pixelDown = inputImage[((i + 1) * width + j)];
+            pixelArray[2] = pixelDown;
+            // Se calcula el pixel de la izquierda
+            pixelLeft = inputImage[(i * width + (j - 1))];
+            pixelArray[3] = pixelLeft;
+            // Se calcula el pixel de la derecha
+            pixelRight = inputImage[( i * width + (j + 1))];
+            pixelArray[4] = pixelRight;
+            for(int m = 0; m < 5; m++){
+                // Se recorre el arreglo de pixeles para encontrar el mayor
+                if (pixelArray[m] > maxPixel)
                 {
-                    // Se obtiene el pixel vecino
-                    unsigned char pixel = inputImage[(i + m) * width + j + n];
-                    // Se compara con el pixel de mayor valor
-                    if (pixel > maxPixel)
-                    {
-                        // Si el pixel vecino es mayor, se actualiza el valor de maxPixel
-                        maxPixel = pixel;
+                    // Si el pixel vecino es mayor, se actualiza el valor de maxPixel
+                    maxPixel = pixelArray[m];
                     }
                 }
-            }
             // Se almacena el resultado en la imagen de salida
             outputImage[i * width + j] = maxPixel;
         }

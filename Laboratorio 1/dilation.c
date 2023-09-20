@@ -86,5 +86,8 @@ int main(int argc, char *argv[])
     free(sequentialOutputImage);
     free(simdOutputImage);
 
+    if (time_p < time_s){
+        printf("Tiempo correcto\n");
+    }
     return 0;
 }
