@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "funciones.h"
+#include <getopt.h>
 
 /*
 Laboratorio 1 - Sistemas Distribuidos y Paralelos 13329 2-2023
@@ -85,9 +86,11 @@ int main(int argc, char *argv[])
     free(inputImage);
     free(sequentialOutputImage);
     free(simdOutputImage);
-
+    /*
+    // Comprobar que efectivamente el tiempo paralelo es menor al secuencial
     if (time_p < time_s){
         printf("Tiempo correcto\n");
     }
+    */
     return 0;
 }

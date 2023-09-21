@@ -17,23 +17,22 @@ Para ello, se utiliza la función _mm_max_epu8() que permite realizar la operaci
 registros SIMD. La información de la imágen de entrada inicialmente se carga en arreglos y luego se 
 cargan en registros SIMD. Se guarda el resultado en la imagen de salida, cuya variable es outputImage.
 */
-void parallelDilation(const unsigned char* inputImage, unsigned char* outputImage, int width, int height){
-    // Declaración de variables
+void parallelDilation(const unsigned char* inputImage, unsigned char* outputImage, int width, int height) {
     int i, j;
-    int max_value = 16;
-    int k = 1;
+    int max_value = 15;
+    int k = 0;
     unsigned char r0[16];
     unsigned char r1[16];
     unsigned char r2[16];
     unsigned char r3[16];
     unsigned char r4[16];
     __m128i R0, R1, R2, R3, R4, result;
+
     // Se recorre la imagen de entrada desde i = 1 y j = 1 para evitar los bordes
     for (i = 1; i < height - 1; i++) {
-        for (j = 1; j < width - 1; j++) {
-
+        for (j = 1; j < width + 1; j++) {
             // Se calculan los índices de los píxeles vecinos
-            int index = i * width + j; // Indice central
+            int index = i * width + j;         // Indice central
             int indexAbove = (i - 1) * width + j; // Vecino superior
             int indexBelow = (i + 1) * width + j; // Vecino inferior
             int indexLeft = i * width + (j - 1); // Vecino izquierdo
@@ -46,8 +45,8 @@ void parallelDilation(const unsigned char* inputImage, unsigned char* outputImag
             r3[k] = inputImage[indexBelow];
             r4[k] = inputImage[index];
 
-            // Cuando k= 17, implica que los registros SIMD estarán llenos
-            if (k  == max_value) {
+            // Cuando k= 15, implica que los registros SIMD estarán llenos
+            if (k == max_value) {
                 // Se cargan los píxeles vecinos en registros SIMD
                 R0 = _mm_loadu_si128((__m128i*)r0); 
                 R1 = _mm_loadu_si128((__m128i*)r1);
@@ -62,17 +61,33 @@ void parallelDilation(const unsigned char* inputImage, unsigned char* outputImag
                 result = _mm_max_epu8(result, R4);
 
                 // Se almacena el resultado en la imágen de salida. Se hace una resta de
-                // index - 16 para evitar que la imágen se corra a la derecha
-                _mm_storeu_si128((__m128i*)(outputImage + index - 16), result);
+                // index - 15 para evitar que la imágen se corra a la derecha
+                _mm_storeu_si128((__m128i*)(outputImage + index - 15), result);
 
                 // Se reinicia el contador k
-                k = 1;
-                } 
-                else {
-                // Si k aún no es igual a 16, el siglo continua. Se aumenta la variable en 1
+                k = 0;
+            } else {
+                // Si k aún no es igual a 15, el ciclo continúa. Se aumenta la variable en 1
                 k++;
             }
         }
+    }
+    // Copiar los bordes de la imagen original a la imagen de salida
+
+    // Copiar el borde superior
+    for (j = 0; j < width; j++) {
+        outputImage[j] = inputImage[j];
+    }
+
+    // Copiar el borde inferior
+    for (j = 0; j < width; j++) {
+        outputImage[(height - 1) * width + j] = inputImage[(height - 1) * width + j];
+    }
+
+    // Copiar el borde izquierdo y derecho
+    for (i = 1; i < height - 1; i++) {
+        outputImage[i * width] = inputImage[i * width];
+        outputImage[i * width + width - 1] = inputImage[i * width + width - 1];
     }
 }
 
@@ -126,6 +141,20 @@ void sequentialDilation(const unsigned char *inputImage, unsigned char *outputIm
             outputImage[i * width + j] = maxPixel;
         }
     }
+    for (j = 0; j < width; j++) {
+        outputImage[j] = inputImage[j];
+    }
+
+    // Copiar el borde inferior
+    for (j = 0; j < width; j++) {
+        outputImage[(height - 1) * width + j] = inputImage[(height - 1) * width + j];
+    }
+
+    // Copiar el borde izquierdo y derecho
+    for (i = 1; i < height - 1; i++) {
+        outputImage[i * width] = inputImage[i * width];
+        outputImage[i * width + width - 1] = inputImage[i * width + width - 1];
+    }
 }
 
 /*
@@ -147,15 +176,15 @@ FILE* readInput(char *inputFileName, char *type, int weight, int height, int max
         exit(EXIT_FAILURE);
     }
     else{ // Si el archivo se abrió correctamente, se leen los detalles de la imágen
-        printf("Nombre de la Imágen: %s\n", inputFileName);
+        //printf("Nombre de la Imágen: %s\n", inputFileName);
         fscanf(inputFile, "%s", type);
-        printf("Tipo de la Imágen: %s\n", type);
+        //printf("Tipo de la Imágen: %s\n", type);
         fscanf(inputFile, "%d\n", &weight);
-        printf("Ancho de la Imágen: %d\n", weight);
+        //printf("Ancho de la Imágen: %d\n", weight);
         fscanf(inputFile, "%d\n", &height);
-        printf("Alto de la Imágen: %d\n", height);
+        //printf("Alto de la Imágen: %d\n", height);
         fscanf(inputFile, "%d\n", &maxValue);
-        printf("Valor máximo de la Imágen (0 - 255): %d\n", maxValue);
+        //printf("Valor máximo de la Imágen (0 - 255): %d\n", maxValue);
         return inputFile;
     }
 }
