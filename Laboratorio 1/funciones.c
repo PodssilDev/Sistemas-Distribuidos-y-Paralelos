@@ -72,19 +72,20 @@ void parallelDilation(const unsigned char* inputImage, unsigned char* outputImag
             }
         }
     }
-    // Copiar los bordes de la imagen original a la imagen de salida
+    // Para que la imagen quede completa y sin detalles faltantes, se deben copiar los bordes
+    // de la imagen original
 
-    // Copiar el borde superior
+    // Se copia el borde superior
     for (j = 0; j < width; j++) {
         outputImage[j] = inputImage[j];
     }
 
-    // Copiar el borde inferior
+    // Se copia el borde inferior
     for (j = 0; j < width; j++) {
         outputImage[(height - 1) * width + j] = inputImage[(height - 1) * width + j];
     }
 
-    // Copiar el borde izquierdo y derecho
+    // Se copia el borde izquierdo y derecho
     for (i = 1; i < height - 1; i++) {
         outputImage[i * width] = inputImage[i * width];
         outputImage[i * width + width - 1] = inputImage[i * width + width - 1];
@@ -141,16 +142,20 @@ void sequentialDilation(const unsigned char *inputImage, unsigned char *outputIm
             outputImage[i * width + j] = maxPixel;
         }
     }
+    // Para que la imagen quede completa y sin detalles faltantes, se deben copiar los bordes
+    // de la imagen original
+
+    // Se copia el borde superior
     for (j = 0; j < width; j++) {
         outputImage[j] = inputImage[j];
     }
 
-    // Copiar el borde inferior
+    // Se copia el borde inferior
     for (j = 0; j < width; j++) {
         outputImage[(height - 1) * width + j] = inputImage[(height - 1) * width + j];
     }
 
-    // Copiar el borde izquierdo y derecho
+    // Se copia el borde izquierdo y derecho
     for (i = 1; i < height - 1; i++) {
         outputImage[i * width] = inputImage[i * width];
         outputImage[i * width + width - 1] = inputImage[i * width + width - 1];

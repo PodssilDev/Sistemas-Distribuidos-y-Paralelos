@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     char *sequentialOutputFileName = NULL;
     char *simdOutputFileName = NULL;
     int width = 0;
-    int opt, height1, weight1, maxValue;
+    int opt, height_i, weight_i, maxValue;
     char type[3];
     unsigned t0_s, t1_s, t0_p, t1_p;
     double time_s, time_p;
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     }
 
     // See lee la imágen de entrada desde un archivo PGM binario (formato P5)
-    FILE *inputFile = readInput(inputFileName, type, weight1, height1, maxValue);
+    FILE *inputFile = readInput(inputFileName, type, weight_i, height_i, maxValue);
 
     // Se crea la variable que contendrá los pixeles de la imágen de entrada
     unsigned char *inputImage = (unsigned char *)malloc(width * width);
@@ -86,11 +86,13 @@ int main(int argc, char *argv[])
     free(inputImage);
     free(sequentialOutputImage);
     free(simdOutputImage);
+    
     /*
     // Comprobar que efectivamente el tiempo paralelo es menor al secuencial
     if (time_p < time_s){
         printf("Tiempo correcto\n");
     }
     */
+    
     return 0;
 }
