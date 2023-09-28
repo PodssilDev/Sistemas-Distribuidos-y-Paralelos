@@ -6,3 +6,5 @@ La solución paralela fue creada utilizando registros de 128 bits y el tipo de d
 El input del programa utiliza getopt(). make run y make run2 rapidamente ejecutan el código con las imágenes
 bike.pgm y lines.pgm respectivamente.
 El output del programa muestra los tiempos de ejecución de las soluciones secuencial y paralela.
+
+NOTA: Dado lo conversado en clases, se eliminó la opción -N de la compilación. El ancho ahora se obtiene directamente de la lectura de la imágen.

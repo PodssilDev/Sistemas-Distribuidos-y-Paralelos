@@ -15,8 +15,7 @@ int main(int argc, char *argv[])
     char *inputFileName = NULL;
     char *sequentialOutputFileName = NULL;
     char *simdOutputFileName = NULL;
-    int width = 0;
-    int opt, height_i, weight_i, maxValue;
+    int opt, height, width, maxValue;
     char type[3];
     unsigned t0_s, t1_s, t0_p, t1_p;
     double time_s, time_p;
@@ -35,9 +34,11 @@ int main(int argc, char *argv[])
         case 'p': // Nombre del archivo de la imágen de salida paralela
             simdOutputFileName = optarg;
             break;
+        /*
         case 'N':
             width = atoi(optarg); // Valor correspondiente al ancho de la imágen
             break;
+        */
         default: // Se aborta el programa si se ingresa una opción no valida
             fprintf(stderr, "Uso: %s -i input.pgm -s output_sequential.pgm -p output_simd.pgm -N width\n", argv[0]);
             exit(EXIT_FAILURE);
@@ -45,14 +46,16 @@ int main(int argc, char *argv[])
     }
 
     // Se verifica que los argumentos sean válidos
-    if (inputFileName == NULL || sequentialOutputFileName == NULL || simdOutputFileName == NULL || width <= 0)
+    if (inputFileName == NULL || sequentialOutputFileName == NULL || simdOutputFileName == NULL)
     {
         fprintf(stderr, "Faltan argumentos o argumentos inválidos.\n");
         exit(EXIT_FAILURE);
     }
 
     // See lee la imágen de entrada desde un archivo PGM binario (formato P5)
-    FILE *inputFile = readInput(inputFileName, type, weight_i, height_i, maxValue);
+    FILE *inputFile = readInput(inputFileName, type);
+    // Se obtiene el ancho de la imágen
+    width = getWidth(inputFile, width, height, maxValue);
 
     // Se crea la variable que contendrá los pixeles de la imágen de entrada
     unsigned char *inputImage = (unsigned char *)malloc(width * width);

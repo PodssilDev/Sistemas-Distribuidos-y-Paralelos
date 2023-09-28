@@ -173,7 +173,7 @@ Salida: Puntero al archivo de entrada, de tipo FILE *
 Descripción: Función para leer la imagen de entrada desde un archivo PGM binario (formato P5).
 Si no se puede abrir el archivo, se muestra un mensaje de error y se aborta el programa.
 */
-FILE* readInput(char *inputFileName, char *type, int weight, int height, int maxValue){
+FILE* readInput(char *inputFileName, char *type){
     // Se abre el archivo de entrada
     FILE *inputFile = fopen(inputFileName, "rb");
     if (inputFile == NULL){ // Se verifica que el archivo se haya creado correctamente
@@ -184,14 +184,27 @@ FILE* readInput(char *inputFileName, char *type, int weight, int height, int max
         //printf("Nombre de la Imágen: %s\n", inputFileName);
         fscanf(inputFile, "%s", type);
         //printf("Tipo de la Imágen: %s\n", type);
-        fscanf(inputFile, "%d\n", &weight);
-        //printf("Ancho de la Imágen: %d\n", weight);
-        fscanf(inputFile, "%d\n", &height);
-        //printf("Alto de la Imágen: %d\n", height);
-        fscanf(inputFile, "%d\n", &maxValue);
-        //printf("Valor máximo de la Imágen (0 - 255): %d\n", maxValue);
         return inputFile;
     }
+}
+
+/*
+Entrada: 
+    - inputFile: puntero al archivo de entrada, de tipo FILE *
+    - width: ancho de la imagen, de tipo integer
+    - height: alto de la imagen, de tipo integer
+    - maxValue: valor máximo de la imagen, de tipo integer
+Salida: Ancho de la imagen, de tipo integer
+Descripción: Función para obtener el ancho de la imagen de entrada.
+*/
+int getWidth(FILE* inputFile, int width, int height, int maxValue){
+    fscanf(inputFile, "%d\n", &width);
+    //printf("Ancho de la Imágen: %d\n", width);
+    fscanf(inputFile, "%d\n", &height);
+    //printf("Alto de la Imágen: %d\n", height);
+    fscanf(inputFile, "%d\n", &maxValue);
+    //printf("Valor máximo de la Imágen (0 - 255): %d\n", maxValue);
+    return width;
 }
 
 /*
