@@ -1,29 +1,58 @@
 #include <iostream>
+#include <fstream>
+#include <string>
 
 
 using namespace std;
 
-_Coroutine lectura{
-    FILE *archivo;
 
-    void main(){
-        archivo = fopen("hltau_completo_uv.csv", "r");
-        char c;
-        while((c = fgetc(archivo)) != EOF){
-            cout << c;
-            suspend();
-        }
-        fclose(archivo);
-    }
-
-    public:
+_Coroutine FileReader{
+public:
+        // constructor
+        FileReader(){};
+        ~FileReader(){};
         void siguiente(){
             resume();
+        }
+        
+private:
+  FILE *archivo;
+
+    void main(){
+    ifstream archivo("hltau_completo_uv.csv");
+    if (!archivo.is_open()) {
+        cout << "No se pudo abrir el archivo" << endl;
+    }
+
+    string linea;
+    while (getline(archivo, linea)) {
+        cout << linea << endl;
+        suspend();
+    }
+
+    archivo.close();
+
+    }
+};
+
+
+_Task Procesador{
+public:
+    Procesador(FileReader* f): f(f){};
+    ~Procesador(){};
+private:
+    FileReader* f;
+    void main(){
+            cout << "Procesando: " << 1 << endl;
+            f->siguiente();
         }
 };
 
 int main(){
-    lectura l;
-    l.siguiente();
+    cout << "Hola" << endl;
+    FileReader* FileReaderPtr = new FileReader();
+    Procesador** procesadores = new Procesador*[1];
+    procesadores[0] = new Procesador(FileReaderPtr);
+    
     return 0;
 }
