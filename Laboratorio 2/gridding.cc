@@ -11,7 +11,7 @@ using namespace std;
 
 _Cormonitor FileReader{
 public:
-    FileReader(ifstream& archivo, int chunkSize): archivo(archivo), chunkSize(chunkSize){};
+    FileReader(ifstream& archivo, int chunkSize, int numberOfTasks): archivo(archivo), chunkSize(chunkSize), numberOfTasks(numberOfTasks){};
     ~FileReader(){};
     void siguiente(){
         resume();
@@ -22,7 +22,36 @@ public:
     string getLinea(){
         return linea;
     }
+    bool isCompletado(){
+        return completado;
+    }
+    bool isCompletadoFinal(){
+        return completado_final;
+    }
+    vector<bool> getPase(){
+        return pase;
+    }
+    int getNumberOfTasks(){
+        return numberOfTasks;
+    }
 
+    int getIdTarea(){
+        return id_tarea;
+    }
+
+    bool esMiTurno(int id, vector<bool> pase, int tareas){
+        int contador = 0;
+        for(int i = 0; i < tareas; i++){
+            if(pase[i] == false){
+                contador = contador + 1;
+            }
+        }
+        if((contador == (tareas - 1)) && (pase[id] == true)){
+            cout << "Es el turno de: " << id << endl;
+            return true;
+        }
+        return false;
+    }
 
 private:
     ifstream& archivo;
@@ -30,16 +59,48 @@ private:
     vector<string> lineas;
 
     string linea;
+    bool completado = false;
+    bool completado_final = false;
     
     int chunkSize;
+    int numberOfTasks;
+    int tareas = numberOfTasks;
+    vector<bool> pase;
+    int id_tarea = 0;
+    int contador = 0;
     void main(){
-        cout << "test2" << endl;
         int i = 0;
+        for (int j = 0; j < numberOfTasks; j++) {
+            pase.push_back(false);
+        }
         while (getline(archivo, linea)) {
+            pase[contador] = true;
+            
             lineas.push_back(linea);
+            if (archivo.eof()) {
+                completado_final = true;
+                break;
+            }
             i = i + 1;
-            if (i == chunkSize) {
+            if (i >= chunkSize) {
+                id_tarea = id_tarea + 1;
                 i = 0;
+                pase[contador] = false;
+                contador = contador + 1;
+                if(contador >= numberOfTasks){
+                    contador = 0;
+                    id_tarea = 0;
+                    pase[contador] = true;
+                }
+                else{
+                    pase[contador] = true;
+                }
+                cout << "suspend" << endl;
+
+                if (archivo.eof()) {
+                    completado_final = true;
+                    break;
+            }
                 suspend();
                 lineas.clear();
             }
@@ -58,13 +119,35 @@ private:
     int id;
     FileReader* f;
     vector <string> lineas;
+    bool completado = false;
     void main(){
-        cout << "Procesando: " << id << endl;
-        f->siguiente();
-        cout << "test" << endl;
-        lineas = f->getLineas();
-        for (int i = 0; i < lineas.size(); i++) {
-            cout << "linea: "<< i << lineas[i] << endl;
+        while(f->getIdTarea() != id){
+                //cout << "atascada: " << id << endl;
+        }
+        while(!completado){
+            if(f->isCompletadoFinal()){
+                break;
+            }
+            cout << "procesador: " << id << endl;
+            f->siguiente();
+            completado = true;
+            lineas = f->getLineas();
+            cout << "proceso terminado: " << id << endl;    
+            for (int i = 0; i < lineas.size(); i++) {
+                cout << "linea: "<< i << lineas[i] << endl;
+                }
+            lineas.clear();
+            while(completado){
+                if(f->esMiTurno(id, f->getPase(), f->getNumberOfTasks())){
+                    completado = false;
+                }
+                if(f->isCompletadoFinal()){
+                break;
+            }
+                
+                //cout << "atascada: " << id << endl;
+            }
+
         }
     }
 };
@@ -117,7 +200,7 @@ int main(int argc, char *argv[]) {
         cout << "No se pudo abrir el archivo" << endl;
     }
     
-    FileReader* FileReaderPtr = new FileReader(archivo, chunk_size);
+    FileReader* FileReaderPtr = new FileReader(archivo, chunk_size, num_tasks);
     //FileReaderPtr->siguiente();
     //vector <string> lineas = FileReaderPtr->getLinea();
     //FileReaderPtr->siguiente();
