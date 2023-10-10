@@ -3,6 +3,7 @@
 #include <string>
 #include <getopt.h>
 #include <vector>
+#include <bits/stdc++.h>
 
 
 using namespace std;
@@ -79,6 +80,8 @@ private:
             lineas.push_back(linea);
             if (archivo.eof()) {
                 completado_final = true;
+                 archivo.close();
+                suspend();
                 break;
             }
             i = i + 1;
@@ -99,15 +102,17 @@ private:
 
                 if (archivo.eof()) {
                     completado_final = true;
+                     archivo.close();
+                     suspend();
                     break;
-            }
+                }
                 suspend();
                 lineas.clear();
             }
             //cout << linea << endl;
 
         }
-        archivo.close();
+
     }
 };
 
@@ -121,6 +126,9 @@ private:
     vector <string> lineas;
     bool completado = false;
     void main(){
+        string linea_actual;
+        vector<string> elementos;
+        double u_k, v_k, vr, vi, w, frec, ce;
         while(f->getIdTarea() != id){
                 //cout << "atascada: " << id << endl;
         }
@@ -132,6 +140,16 @@ private:
             f->siguiente();
             completado = true;
             lineas = f->getLineas();
+            for(int i = 0; i < lineas.size(); i++){
+                linea_actual = lineas[i];
+                stringstream ss(linea_actual);
+                while(ss.good()){
+                    string substr;
+                    getline(ss, substr, ',');
+                    cout << "substr: " << substr << endl;
+                } 
+                //cout << "linea: " << i << lineas[i] << endl;
+            }
             cout << "proceso terminado: " << id << endl;    
             for (int i = 0; i < lineas.size(); i++) {
                 cout << "linea: "<< i << lineas[i] << endl;
@@ -142,7 +160,7 @@ private:
                     completado = false;
                 }
                 if(f->isCompletadoFinal()){
-                break;
+                    break;
             }
                 
                 //cout << "atascada: " << id << endl;
@@ -155,7 +173,7 @@ private:
 int main(int argc, char *argv[]) {
     string input_file = "";
     char *output_directory = NULL;
-    double deltau = 0.0;
+    double deltax = 0.0;
     int image_size = 0;
     int chunk_size = 0;
     int num_tasks = 0;
@@ -170,7 +188,7 @@ int main(int argc, char *argv[]) {
                 output_directory = optarg;
                 break;
             case 'd':
-                deltau = atof(optarg);
+                deltax = atof(optarg);
                 break;
             case 'N':
                 image_size = atoi(optarg);
@@ -182,7 +200,7 @@ int main(int argc, char *argv[]) {
                 num_tasks = atoi(optarg);
                 break;
             default:
-                fprintf(stderr, "Uso: %s -i datosuv.raw -o datosgrideados -d deltau -N tamañoimagen -c chunklectura -t numerotareas\n", argv[0]);
+                fprintf(stderr, "Uso: %s -i datosuv.raw -o datosgrideados -d deltax -N tamañoimagen -c chunklectura -t numerotareas\n", argv[0]);
                 exit(EXIT_FAILURE);
         }
     }
@@ -190,7 +208,7 @@ int main(int argc, char *argv[]) {
 
     std::cout << input_file << std::endl;
     printf("Output directory: %s\n", output_directory);
-    printf("Deltau: %lf\n", deltau);
+    printf("Deltau: %lf\n", deltax);
     printf("Image size: %d\n", image_size);
     printf("Chunk size: %d\n", chunk_size);
     printf("Number of tasks: %d\n", num_tasks);
@@ -199,6 +217,13 @@ int main(int argc, char *argv[]) {
     if (!archivo.is_open()) {
         cout << "No se pudo abrir el archivo" << endl;
     }
+    /*
+    string test = "hola, esto es, una prueba";
+    stringstream ss(test);
+    string subtr;
+    getline(ss, subtr, ',');
+    cout << "resultado: " << subtr << endl;
+    */
     
     FileReader* FileReaderPtr = new FileReader(archivo, chunk_size, num_tasks);
     //FileReaderPtr->siguiente();
@@ -216,6 +241,6 @@ int main(int argc, char *argv[]) {
     }
     delete procesadores;
     delete FileReaderPtr;
-
+    
     return 0;
 }
