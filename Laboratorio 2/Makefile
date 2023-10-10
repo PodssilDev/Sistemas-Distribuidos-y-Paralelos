@@ -1,7 +1,7 @@
 all: gridding
 
 run:
-	./gridding -i hltau_test.csv -o datosgrideados -d 0.0 -N 10 -c 2 -t 2
+	./gridding -i hltau_test.csv -o datosgrideados -d 0.0 -N 10 -c 9 -t 6
 
 run2:
 	./gridding -i hltau_completo_uv.csv -o datosgrideados -d 0.0 -N 20 -c 10000 -t 20

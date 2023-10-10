@@ -146,8 +146,15 @@ private:
                 while(ss.good()){
                     string substr;
                     getline(ss, substr, ',');
-                    cout << "substr: " << substr << endl;
-                } 
+                    elementos.push_back(substr);
+                }
+                u_k = stod(elementos[0]);
+                v_k = stod(elementos[1]);
+                vr = stod(elementos[3]);
+                vi = stod(elementos[4]);
+                w = stod(elementos[5]);
+                frec = stod(elementos[6]);
+                ce = stod(elementos[7]);
                 //cout << "linea: " << i << lineas[i] << endl;
             }
             cout << "proceso terminado: " << id << endl;    
