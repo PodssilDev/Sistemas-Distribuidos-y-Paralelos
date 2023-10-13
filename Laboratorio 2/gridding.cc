@@ -4,19 +4,31 @@
 #include <getopt.h>
 #include <vector>
 #include <bits/stdc++.h>
-
+#include <uC++.h>
+#include <cmath>
 
 using namespace std;
 
+#define light_speed 299792458
 
-
-_Cormonitor FileReader{
+_Mutex _Coroutine FileReader{
 public:
     FileReader(ifstream& archivo, int chunkSize, int numberOfTasks): archivo(archivo), chunkSize(chunkSize), numberOfTasks(numberOfTasks){};
     ~FileReader(){};
-    void siguiente(){
-        resume();
-    }
+
+    vector<string> siguiente(int id){
+        if (completado_final){
+            lineas.clear();
+            return lineas;
+        }
+        else{
+            resume();
+            cout << "Entro: " << id << endl;
+
+            return lineas;
+        }
+    };
+
     vector<string> getLineas(){
         return lineas;
     }
@@ -29,9 +41,7 @@ public:
     bool isCompletadoFinal(){
         return completado_final;
     }
-    vector<bool> getPase(){
-        return pase;
-    }
+
     int getNumberOfTasks(){
         return numberOfTasks;
     }
@@ -39,7 +49,12 @@ public:
     int getIdTarea(){
         return id_tarea;
     }
+    int contador_lineas = 0;
 
+    int getContador_lineas(){
+        return contador_lineas;
+    }
+    /*
     bool esMiTurno(int id, vector<bool> pase, int tareas){
         int contador = 0;
         for(int i = 0; i < tareas; i++){
@@ -53,6 +68,7 @@ public:
         }
         return false;
     }
+    */
 
 private:
     ifstream& archivo;
@@ -66,80 +82,67 @@ private:
     int chunkSize;
     int numberOfTasks;
     int tareas = numberOfTasks;
-    vector<bool> pase;
     int id_tarea = 0;
     int contador = 0;
     void main(){
         int i = 0;
-        for (int j = 0; j < numberOfTasks; j++) {
-            pase.push_back(false);
-        }
-        while (getline(archivo, linea)) {
-            pase[contador] = true;
-            
+        while (getline(archivo, linea)) { 
             lineas.push_back(linea);
+            contador_lineas = contador_lineas + 1;
+            cout << "Procesada: " << contador_lineas << endl;
             if (archivo.eof()) {
                 completado_final = true;
-                 archivo.close();
-                suspend();
+                archivo.close();
                 break;
             }
             i = i + 1;
             if (i >= chunkSize) {
-                id_tarea = id_tarea + 1;
                 i = 0;
-                pase[contador] = false;
-                contador = contador + 1;
-                if(contador >= numberOfTasks){
-                    contador = 0;
-                    id_tarea = 0;
-                    pase[contador] = true;
-                }
-                else{
-                    pase[contador] = true;
-                }
                 cout << "suspend" << endl;
-
                 if (archivo.eof()) {
                     completado_final = true;
                      archivo.close();
-                     suspend();
-                    break;
+                     break;
                 }
                 suspend();
                 lineas.clear();
             }
             //cout << linea << endl;
-
         }
+        suspend();
 
     }
 };
 
 _Task Procesador{
 public:
-    Procesador(int procesadorID, FileReader* f): id(procesadorID), f(f){};
+    Procesador(int procesadorID, FileReader* f, double delta_x, int N): id(procesadorID), f(f), delta_x(delta_x), N(N){};
     ~Procesador(){};
 private:
     int id;
     FileReader* f;
+    double delta_x;
+    int N;
     vector <string> lineas;
     bool completado = false;
     void main(){
+        double delta_u = 0.0;
+        double delta_v = 0.0;
+        double i_k, j_k;
         string linea_actual;
         vector<string> elementos;
         double u_k, v_k, vr, vi, w, frec, ce;
-        while(f->getIdTarea() != id){
-                //cout << "atascada: " << id << endl;
-        }
+        //cout << "Soy la tarea: " << id << endl;
+        delta_u = 1/(N*delta_x);
+        delta_v = delta_u;
         while(!completado){
-            if(f->isCompletadoFinal()){
+            //cout << "Soy la tarea: " << id << endl;
+
+            //cout << "procesador: " << id << endl;
+            lineas = f->siguiente(id);
+            if(lineas.empty()){
                 break;
             }
-            cout << "procesador: " << id << endl;
-            f->siguiente();
-            completado = true;
-            lineas = f->getLineas();
             for(int i = 0; i < lineas.size(); i++){
                 linea_actual = lineas[i];
                 stringstream ss(linea_actual);
@@ -155,33 +158,31 @@ private:
                 w = stod(elementos[5]);
                 frec = stod(elementos[6]);
                 ce = stod(elementos[7]);
-                //cout << "linea: " << i << lineas[i] << endl;
+                u_k = u_k * (frec / light_speed);
+                v_k = v_k * (frec / light_speed);
+                i_k = round(u_k / delta_u) + (N/2);
+                cout << "i_k: " << i_k << endl;
+                j_k = round(v_k / delta_v) + (N/2);
+                elementos.clear();
+                
             }
-            cout << "proceso terminado: " << id << endl;    
+           // cout << "proceso terminado: " << id << endl;    
             for (int i = 0; i < lineas.size(); i++) {
                 cout << "linea: "<< i << lineas[i] << endl;
                 }
             lineas.clear();
-            while(completado){
-                if(f->esMiTurno(id, f->getPase(), f->getNumberOfTasks())){
-                    completado = false;
-                }
-                if(f->isCompletadoFinal()){
-                    break;
-            }
-                
                 //cout << "atascada: " << id << endl;
             }
+       // cout << "Me voy. Soy la tarea: " << id << endl;
 
         }
-    }
 };
 
 int main(int argc, char *argv[]) {
     string input_file = "";
     char *output_directory = NULL;
-    double deltax = 0.0;
-    int image_size = 0;
+    double delta_x = 0.0;
+    int N = 0;
     int chunk_size = 0;
     int num_tasks = 0;
 
@@ -195,10 +196,10 @@ int main(int argc, char *argv[]) {
                 output_directory = optarg;
                 break;
             case 'd':
-                deltax = atof(optarg);
+                delta_x = atof(optarg);
                 break;
             case 'N':
-                image_size = atoi(optarg);
+                N = atoi(optarg);
                 break;
             case 'c':
                 chunk_size = atoi(optarg);
@@ -207,7 +208,7 @@ int main(int argc, char *argv[]) {
                 num_tasks = atoi(optarg);
                 break;
             default:
-                fprintf(stderr, "Uso: %s -i datosuv.raw -o datosgrideados -d deltax -N tamañoimagen -c chunklectura -t numerotareas\n", argv[0]);
+                fprintf(stderr, "Uso: %s -i datosuv.raw -o datosgrideados -d delta_x -N tamañoimagen -c chunklectura -t numerotareas\n", argv[0]);
                 exit(EXIT_FAILURE);
         }
     }
@@ -215,8 +216,8 @@ int main(int argc, char *argv[]) {
 
     std::cout << input_file << std::endl;
     printf("Output directory: %s\n", output_directory);
-    printf("Deltau: %lf\n", deltax);
-    printf("Image size: %d\n", image_size);
+    printf("Delta x: %lf\n", delta_x);
+    printf("Image size: %d\n", N);
     printf("Chunk size: %d\n", chunk_size);
     printf("Number of tasks: %d\n", num_tasks);
 
@@ -238,13 +239,15 @@ int main(int argc, char *argv[]) {
     //FileReaderPtr->siguiente();
     //string linea = FileReaderPtr->getLinea();
     //FileReaderPtr->siguiente();
+    delta_x = ((M_PI)/(3600 * 180)) * delta_x;
     
     Procesador** procesadores = new Procesador*[num_tasks];
     for (int i = 0; i < num_tasks; i++) {
-        procesadores[i] = new Procesador(i, FileReaderPtr);
+        procesadores[i] = new Procesador(i, FileReaderPtr, delta_x, N);
+        cout << "Tarea creada: " << i << endl;
     }
     for (int i = 0; i < num_tasks; i++) {
-        procesadores[i]->~Procesador();
+        delete procesadores[i];
     }
     delete procesadores;
     delete FileReaderPtr;
