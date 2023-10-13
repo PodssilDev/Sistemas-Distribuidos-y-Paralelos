@@ -11,6 +11,74 @@ using namespace std;
 
 #define light_speed 299792458
 
+_Mutex  class Matrix{
+private:
+    double** matrix_real;
+    double** matrix_imag;
+    double** matrix_peso;
+    int N;
+
+public:
+    Matrix(int N): N(N){
+        matrix_real = new double*[N];
+        for(int i = 0; i < N; i++){
+            matrix_real[i] = new double[N];
+        }
+        matrix_imag = new double*[N];
+        for(int i = 0; i < N; i++){
+            matrix_imag[i] = new double[N];
+        }
+        matrix_peso = new double*[N];
+        for(int i = 0; i < N; i++){
+            matrix_peso[i] = new double[N];
+        }
+    };
+    ~Matrix(){
+        for(int i = 0; i < N; i++){
+            delete matrix_real[i];
+        }
+        delete matrix_real;
+        for(int i = 0; i < N; i++){
+            delete matrix_imag[i];
+        }
+        delete matrix_imag;
+        for(int i = 0; i < N; i++){
+            delete matrix_peso[i];
+        }
+        delete matrix_peso;
+    };
+
+    void setReal(int i, int j, double value){
+        matrix_real[i][j] = value;
+    };
+    void setImag(int i, int j, double value){
+        matrix_imag[i][j] = value;
+    };
+    void setPeso(int i, int j, double value){
+        matrix_peso[i][j] = value;
+    };
+    double getReal(int i, int j){
+        return matrix_real[i][j];
+    };
+    double getImag(int i, int j){
+        return matrix_imag[i][j];
+    };
+    double getPeso(int i, int j){
+        return matrix_peso[i][j];
+    };
+    int getN(){
+        return N;
+    };
+    void printMatrix(){
+        for(int i = 0; i < N; i++){
+            for(int j = 0; j < N; j++){
+                cout << matrix_real[i][j] << " ";
+            }
+            cout << endl;
+        }
+    };
+};
+
 _Mutex _Coroutine FileReader{
 public:
     FileReader(ifstream& archivo, int chunkSize, int numberOfTasks): archivo(archivo), chunkSize(chunkSize), numberOfTasks(numberOfTasks){};
@@ -116,19 +184,20 @@ private:
 
 _Task Procesador{
 public:
-    Procesador(int procesadorID, FileReader* f, double delta_x, int N): id(procesadorID), f(f), delta_x(delta_x), N(N){};
+    Procesador(int procesadorID, FileReader* f, double delta_x, int N, Matrix* m): id(procesadorID), f(f), delta_x(delta_x), N(N), m(m){};
     ~Procesador(){};
 private:
     int id;
     FileReader* f;
     double delta_x;
     int N;
+    Matrix* m;
     vector <string> lineas;
     bool completado = false;
     void main(){
         double delta_u = 0.0;
         double delta_v = 0.0;
-        double i_k, j_k;
+        double i_k, j_k, calculo_real, calculo_imag, calculo_peso;
         string linea_actual;
         vector<string> elementos;
         double u_k, v_k, vr, vi, w, frec, ce;
@@ -163,6 +232,13 @@ private:
                 i_k = round(u_k / delta_u) + (N/2);
                 cout << "i_k: " << i_k << endl;
                 j_k = round(v_k / delta_v) + (N/2);
+                calculo_real = m->getReal(i_k, j_k) + (vr * w);
+                cout << "calculo real: " << calculo_real << endl;
+                calculo_imag = m->getImag(i_k, j_k) + (vi * w);
+                calculo_peso = m->getPeso(i_k, j_k) + w;
+                m->setReal(i_k, j_k, calculo_real);
+                m->setImag(i_k, j_k, calculo_imag);
+                m->setPeso(i_k, j_k, calculo_peso);
                 elementos.clear();
                 
             }
@@ -180,7 +256,7 @@ private:
 
 int main(int argc, char *argv[]) {
     string input_file = "";
-    char *output_directory = NULL;
+    string output_directory = "";
     double delta_x = 0.0;
     int N = 0;
     int chunk_size = 0;
@@ -214,12 +290,12 @@ int main(int argc, char *argv[]) {
     }
 
 
-    std::cout << input_file << std::endl;
-    printf("Output directory: %s\n", output_directory);
-    printf("Delta x: %lf\n", delta_x);
-    printf("Image size: %d\n", N);
-    printf("Chunk size: %d\n", chunk_size);
-    printf("Number of tasks: %d\n", num_tasks);
+    cout << input_file << endl;
+    cout << output_directory << endl;
+    cout << delta_x << endl;
+    cout << N << endl;
+    cout << chunk_size << endl;
+    cout << num_tasks << endl;
 
     ifstream archivo(input_file.c_str());
     if (!archivo.is_open()) {
@@ -240,17 +316,27 @@ int main(int argc, char *argv[]) {
     //string linea = FileReaderPtr->getLinea();
     //FileReaderPtr->siguiente();
     delta_x = ((M_PI)/(3600 * 180)) * delta_x;
-    
+    Matrix* matrix = new Matrix(N);
     Procesador** procesadores = new Procesador*[num_tasks];
     for (int i = 0; i < num_tasks; i++) {
-        procesadores[i] = new Procesador(i, FileReaderPtr, delta_x, N);
+        procesadores[i] = new Procesador(i, FileReaderPtr, delta_x, N, matrix);
         cout << "Tarea creada: " << i << endl;
     }
     for (int i = 0; i < num_tasks; i++) {
         delete procesadores[i];
     }
+    //matrix->setReal(0, 0, 1.0);
+    //matrix->printMatrix();
     delete procesadores;
     delete FileReaderPtr;
-    
+    for(int i = 0; i < N; i++){
+        for(int j = 0; j < N; j++){
+            if(matrix->getPeso(i, j) != 0){
+                matrix->setReal(i, j, (matrix->getReal(i, j) / matrix->getPeso(i, j)));
+                matrix->setImag(i, j, (matrix->getImag(i, j) / matrix->getPeso(i, j)));
+            }
+        }
+    }
+    delete matrix;
     return 0;
 }
