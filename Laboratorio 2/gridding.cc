@@ -17,21 +17,21 @@ private:
     int N;
 
 public:
-    double** matrix_real;
-    double** matrix_imag;
-    double** matrix_peso;
+    float** matrix_real;
+    float** matrix_imag;
+    float** matrix_peso;
     Matrix(int N): N(N){
-        matrix_real = new double*[N];
+        matrix_real = new float*[N];
         for(int i = 0; i < N; i++){
-            matrix_real[i] = new double[N];
+            matrix_real[i] = new float[N];
         }
-        matrix_imag = new double*[N];
+        matrix_imag = new float*[N];
         for(int i = 0; i < N; i++){
-            matrix_imag[i] = new double[N];
+            matrix_imag[i] = new float[N];
         }
-        matrix_peso = new double*[N];
+        matrix_peso = new float*[N];
         for(int i = 0; i < N; i++){
-            matrix_peso[i] = new double[N];
+            matrix_peso[i] = new float[N];
         }
     };
     ~Matrix(){
@@ -50,23 +50,23 @@ public:
     };
 
 
-    void setReal(int i, int j, double value){
+    void setReal(int i, int j, float value){
         matrix_real[i][j] = value;
     };
-    void setImag(int i, int j, double value){
+    void setImag(int i, int j, float value){
         matrix_imag[i][j] = value;
     };
-    void setPeso(int i, int j, double value){
+    void setPeso(int i, int j, float value){
         matrix_peso[i][j] = value;
     };
 
-    double getReal(int i, int j){
+    float getReal(int i, int j){
         return matrix_real[i][j];
     };
-    double getImag(int i, int j){
+    float getImag(int i, int j){
         return matrix_imag[i][j];
     };
-    double getPeso(int i, int j){
+    float getPeso(int i, int j){
         return matrix_peso[i][j];
     };
     int getN(){
@@ -190,23 +190,23 @@ private:
 
 _Task Procesador{
 public:
-    Procesador(int procesadorID, FileReader* f, double delta_x, int N, Matrix* m): id(procesadorID), f(f), delta_x(delta_x), N(N), m(m){};
+    Procesador(int procesadorID, FileReader* f, float delta_x, int N, Matrix* m): id(procesadorID), f(f), delta_x(delta_x), N(N), m(m){};
     ~Procesador(){};
 private:
     int id;
     FileReader* f;
-    double delta_x;
+    float delta_x;
     int N;
     Matrix* m;
     vector <string> lineas;
     bool completado = false;
     void main(){
-        double delta_u = 0.0;
-        double delta_v = 0.0;
-        double i_k, j_k, calculo_real, calculo_imag, calculo_peso;
+        float delta_u = 0.0;
+        float delta_v = 0.0;
+        float i_k, j_k, calculo_real, calculo_imag, calculo_peso;
         string linea_actual;
         vector<string> elementos;
-        double u_k, v_k, vr, vi, w, frec, ce;
+        float u_k, v_k, vr, vi, w, frec, ce;
         //cout << "Soy la tarea: " << id << endl;
         delta_u = 1/(N*delta_x);
         delta_v = delta_u;
@@ -267,7 +267,8 @@ int main(int argc, char *argv[]) {
     string output_directory = "";
     string output_directory_r = "";
     string output_directory_i = "";
-    double delta_x = 0.0;
+
+    float delta_x = 0.0;
     int N = 0;
     int chunk_size = 0;
     int num_tasks = 0;
@@ -359,7 +360,7 @@ int main(int argc, char *argv[]) {
 
     // Escribir los datos de la matriz en el archivo .raw
     for (int i = 0; i < N; i++) {
-        archivo_out.write(reinterpret_cast<char*>(matrix->matrix_real[i]), N * sizeof(double));
+        archivo_out.write(reinterpret_cast<char*>(matrix->matrix_real[i]), N * sizeof(float));
     }
 
     // Cerrar el archivo
@@ -371,7 +372,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     for (int i = 0; i < N; i++) {
-        archivo_out2.write(reinterpret_cast<char*>(matrix->matrix_imag[i]), N * sizeof(double));
+        archivo_out2.write(reinterpret_cast<char*>(matrix->matrix_imag[i]), N * sizeof(float));
     }
     archivo_out2.close();
     delete matrix;
