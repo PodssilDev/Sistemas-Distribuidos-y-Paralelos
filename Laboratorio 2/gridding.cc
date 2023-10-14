@@ -10,7 +10,8 @@
 
 using namespace std;
 
-#define light_speed 299792458
+#define light_speed 300000000
+
 
 _Mutex  class Matrix{
 private:
