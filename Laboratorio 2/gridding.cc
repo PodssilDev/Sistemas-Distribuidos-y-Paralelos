@@ -24,14 +24,23 @@ public:
         matrix_real = new double*[N];
         for(int i = 0; i < N; i++){
             matrix_real[i] = new double[N];
+            for(int j = 0; j < N; j++){
+                matrix_real[i][j] = 0.0;
+            }
         }
         matrix_imag = new double*[N];
         for(int i = 0; i < N; i++){
             matrix_imag[i] = new double[N];
+            for(int j = 0; j < N; j++){
+                matrix_imag[i][j] = 0.0;
+            }
         }
         matrix_peso = new double*[N];
         for(int i = 0; i < N; i++){
             matrix_peso[i] = new double[N];
+            for(int j = 0; j < N; j++){
+                matrix_peso[i][j] = 0.0;
+            }
         }
     };
     ~Matrix(){
@@ -161,7 +170,7 @@ private:
         while (getline(archivo, linea)) { 
             lineas.push_back(linea);
             contador_lineas = contador_lineas + 1;
-            cout << "Procesada: " << contador_lineas << endl;
+            //cout << "Procesada: " << contador_lineas << endl;
             if (archivo.eof()) {
                 completado_final = true;
                 archivo.close();
@@ -342,7 +351,7 @@ int main(int argc, char *argv[]) {
     delete FileReaderPtr;
     for(int i = 0; i < N; i++){
         for(int j = 0; j < N; j++){
-            if(matrix->getPeso(i, j) != 0){
+            if(matrix->getPeso(i, j) != 0.0){
                 matrix->setReal(i, j, (matrix->getReal(i, j) / matrix->getPeso(i, j)));
                 matrix->setImag(i, j, (matrix->getImag(i, j) / matrix->getPeso(i, j)));
             }
