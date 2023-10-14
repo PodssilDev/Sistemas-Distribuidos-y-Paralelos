@@ -6,6 +6,7 @@
 #include <bits/stdc++.h>
 #include <uC++.h>
 #include <cmath>
+#include <uBarrier.h>
 
 using namespace std;
 
@@ -13,12 +14,12 @@ using namespace std;
 
 _Mutex  class Matrix{
 private:
-    double** matrix_real;
-    double** matrix_imag;
-    double** matrix_peso;
     int N;
 
 public:
+    double** matrix_real;
+    double** matrix_imag;
+    double** matrix_peso;
     Matrix(int N): N(N){
         matrix_real = new double*[N];
         for(int i = 0; i < N; i++){
@@ -48,6 +49,7 @@ public:
         delete matrix_peso;
     };
 
+
     void setReal(int i, int j, double value){
         matrix_real[i][j] = value;
     };
@@ -57,6 +59,7 @@ public:
     void setPeso(int i, int j, double value){
         matrix_peso[i][j] = value;
     };
+
     double getReal(int i, int j){
         return matrix_real[i][j];
     };
@@ -154,6 +157,7 @@ private:
     int contador = 0;
     void main(){
         int i = 0;
+        while(true){
         while (getline(archivo, linea)) { 
             lineas.push_back(linea);
             contador_lineas = contador_lineas + 1;
@@ -166,7 +170,7 @@ private:
             i = i + 1;
             if (i >= chunkSize) {
                 i = 0;
-                cout << "suspend" << endl;
+                //cout << "suspend" << endl;
                 if (archivo.eof()) {
                     completado_final = true;
                      archivo.close();
@@ -178,6 +182,8 @@ private:
             //cout << linea << endl;
         }
         suspend();
+        lineas.clear();
+        }
 
     }
 };
@@ -204,7 +210,7 @@ private:
         //cout << "Soy la tarea: " << id << endl;
         delta_u = 1/(N*delta_x);
         delta_v = delta_u;
-        while(!completado){
+        while(true){
             //cout << "Soy la tarea: " << id << endl;
 
             //cout << "procesador: " << id << endl;
@@ -230,10 +236,10 @@ private:
                 u_k = u_k * (frec / light_speed);
                 v_k = v_k * (frec / light_speed);
                 i_k = round(u_k / delta_u) + (N/2);
-                cout << "i_k: " << i_k << endl;
+                //cout << "i_k: " << i_k << endl;
                 j_k = round(v_k / delta_v) + (N/2);
                 calculo_real = m->getReal(i_k, j_k) + (vr * w);
-                cout << "calculo real: " << calculo_real << endl;
+                //cout << "calculo real: " << calculo_real << endl;
                 calculo_imag = m->getImag(i_k, j_k) + (vi * w);
                 calculo_peso = m->getPeso(i_k, j_k) + w;
                 m->setReal(i_k, j_k, calculo_real);
@@ -243,10 +249,12 @@ private:
                 
             }
            // cout << "proceso terminado: " << id << endl;    
+           /*
             for (int i = 0; i < lineas.size(); i++) {
-                cout << "linea: "<< i << lineas[i] << endl;
+                //cout << "linea: "<< i << lineas[i] << endl;
                 }
             lineas.clear();
+            */
                 //cout << "atascada: " << id << endl;
             }
        // cout << "Me voy. Soy la tarea: " << id << endl;
@@ -257,6 +265,8 @@ private:
 int main(int argc, char *argv[]) {
     string input_file = "";
     string output_directory = "";
+    string output_directory_r = "";
+    string output_directory_i = "";
     double delta_x = 0.0;
     int N = 0;
     int chunk_size = 0;
@@ -296,6 +306,7 @@ int main(int argc, char *argv[]) {
     cout << N << endl;
     cout << chunk_size << endl;
     cout << num_tasks << endl;
+    //b = new uBarrier(num_tasks);
 
     ifstream archivo(input_file.c_str());
     if (!archivo.is_open()) {
@@ -337,6 +348,32 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+    output_directory_r = output_directory + "r.raw";
+    output_directory_i = output_directory + "i.raw";
+    ofstream archivo_out(output_directory_r.c_str(), ios::out | ios::binary);
+
+    if (!archivo_out) {
+        std::cerr << "No se pudo abrir el archivo " << std::endl;
+        return 1;
+    }
+
+    // Escribir los datos de la matriz en el archivo .raw
+    for (int i = 0; i < N; i++) {
+        archivo_out.write(reinterpret_cast<char*>(matrix->matrix_real[i]), N * sizeof(double));
+    }
+
+    // Cerrar el archivo
+    archivo_out.close();
+
+    ofstream archivo_out2(output_directory_i.c_str(), ios::out | ios::binary);
+    if(!archivo_out2){
+        std::cerr << "No se pudo abrir el archivo " << std::endl;
+        return 1;
+    }
+    for (int i = 0; i < N; i++) {
+        archivo_out2.write(reinterpret_cast<char*>(matrix->matrix_imag[i]), N * sizeof(double));
+    }
+    archivo_out2.close();
     delete matrix;
     return 0;
 }
