@@ -1,8 +1,8 @@
-f1 = fopen("datosgrideadosr.raw", "r");
-f2 = fopen("datosgrideadosi.raw", "r");
+f1 = fopen("datosgrideadosrm.raw", "r");
+f2 = fopen("datosgrideadosim.raw", "r");
 
-s1 = fread(f1, "float");
-s2 = fread(f2, "float");
+s1 = fread(f1, "double");
+s2 = fread(f2, "double");
 
 re = reshape(s1, 2048, 2048);
 im = reshape(s2, 2048, 2048);
