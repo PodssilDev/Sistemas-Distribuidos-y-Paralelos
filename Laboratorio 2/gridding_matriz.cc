@@ -397,8 +397,17 @@ int main(int argc, char *argv[]) {
     }
     delete procesadores_matriz;
     delete FileReaderPtr;
-    delete matrix_real;
-    delete matrix_imag;
-    delete matrix_peso;
+    for(int i = 0; i < N; i++){
+            delete matrix_real[i];
+        }
+        delete matrix_real;
+        for(int i = 0; i < N; i++){
+            delete matrix_imag[i];
+        }
+        delete matrix_imag;
+        for(int i = 0; i < N; i++){
+            delete matrix_peso[i];
+        }
+        delete matrix_peso;
     return 0;
 }
