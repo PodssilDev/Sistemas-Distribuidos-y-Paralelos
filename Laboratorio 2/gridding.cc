@@ -7,6 +7,7 @@
 #include <uC++.h>
 #include <cmath>
 #include <uBarrier.h>
+#include <time.h>
 
 using namespace std;
 
@@ -103,7 +104,7 @@ public:
         }
         else{
             resume();
-            cout << "Entro: " << id << endl;
+            //cout << "Entro: " << id << endl;
 
             return lineas;
         }
@@ -280,6 +281,8 @@ int main(int argc, char *argv[]) {
     int N = 0;
     int chunk_size = 0;
     int num_tasks = 0;
+    unsigned t0, t1;
+    double time2;
 
     int opt;
     while ((opt = getopt(argc, argv, "i:o:d:N:c:t:")) != -1) {
@@ -338,6 +341,7 @@ int main(int argc, char *argv[]) {
     delta_x = ((M_PI)/(3600 * 180)) * delta_x;
     Matrix* matrix = new Matrix(N);
     Procesador** procesadores = new Procesador*[num_tasks];
+    t0 = clock(); 
     for (int i = 0; i < num_tasks; i++) {
         procesadores[i] = new Procesador(i, FileReaderPtr, delta_x, N, matrix);
         cout << "Tarea creada: " << i << endl;
@@ -357,6 +361,9 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+    t1 = clock();
+    time2 = (double)(t1 - t0) / CLOCKS_PER_SEC; // Cálculo del tiempo de ejecución
+    cout << "Terminado: " << time2 << "[s]" << endl;
     output_directory_r = output_directory + "r.raw";
     output_directory_i = output_directory + "i.raw";
     ofstream archivo_out(output_directory_r.c_str(), ios::out | ios::binary);

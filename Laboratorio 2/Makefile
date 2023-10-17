@@ -6,8 +6,15 @@ run:
 run2:
 	./gridding -i hltau_completo_uv.csv -o datosgrideados -d 0.003 -N 2048 -c 15758 -t 13
 
+run4:
+	./gridding -i hltau_completo_uv.csv -o datosgrideados -d 0.003 -N 2048 -c 15758 -t 1
+
 run3:
 	./gridding_m -i hltau_completo_uv.csv -o datosgrideados -d 0.003 -N 2048 -c 15758 -t 13
+
+run5:
+	./gridding_m -i hltau_completo_uv.csv -o datosgrideados -d 0.003 -N 2048 -c 15758 -t 1
+	
 
 gridding: gridding.cc
 	u++ -o gridding gridding.cc
