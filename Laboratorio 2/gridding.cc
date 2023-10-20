@@ -345,6 +345,10 @@ int main(int argc, char *argv[]) {
         cout << "Tarea creada: " << i << endl;
     }
 
+    for (int i = 0; i < num_tasks; i++) {
+        delete Gridders[i];
+    }
+
     // Se realiza la normalización de la matriz real e imaginaria
     for(int i = 0; i < N; i++){
         for(int j = 0; j < N; j++){
@@ -383,9 +387,7 @@ int main(int argc, char *argv[]) {
     cout << "Archivo de salida de la parte imaginaria creado" << endl;
 
     // Se elimina toda la memoria reservada del programa   
-    for (int i = 0; i < num_tasks; i++) {
-        delete Gridders[i];
-    }
+
     delete Gridders;
     delete ReaderPtr;
     delete matrix;
