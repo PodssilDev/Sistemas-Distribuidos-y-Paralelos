@@ -6,7 +6,6 @@
 #include <bits/stdc++.h>
 #include <uC++.h>
 #include <cmath>
-#include <uBarrier.h>
 #include <time.h>
 
 using namespace std;
