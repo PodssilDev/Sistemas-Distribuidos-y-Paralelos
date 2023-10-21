@@ -20,12 +20,12 @@ Solucion: Matriz propia de cada tarea
 #define light_speed 299792458
 
 /*
-La clase Reader es la encargada de leer el archivo de entrada y entregar las lineas de este a las tareas
+La Corrutina Reader es la encargada de leer el archivo de entrada y entregar las lineas de este a las tareas
 para su procesamiento. Esta clase es de tipo Mutex Coroutine y cuenta con un atributo ifstream que es el archivo
 de entrada. Ademas, cuenta con un atributo chunkSize que indica la cantidad de lineas que se le entregaran
 a cada tarea y un atributo numberOfTasks que indica la cantidad de tareas que se creadas. La clase cuenta
-con un metodo siguiente que es el encargado de entregar activar el main de la corrutina y un metodo main que es
-el encargado de leer el archivo y entregar las lineas a las tareas
+con un metodo siguiente que es el encargado de entregar las lineas leidas y  activar el main de la corrutina y
+ un metodo main que es el encargado de leer el archivo y entregar las lineas a las tareas
 */
 _Mutex _Coroutine Reader{
 public:
@@ -99,8 +99,8 @@ private:
 };
 
 /*
-La clase Gridder es la encargada de procesar los datos entregados por la clase Reader. Esta clase es de tipo
-_Task y cuenta con un atributo id que indica el id de la tarea, un atributo r que es un puntero a la clase Reader,
+La Tarea Gridder es la encargada de procesar los datos entregados por la clase Reader. Esta clase es de tipo
+_Task y cuenta con un atributo id que indica el id de la tarea, un atributo r que es un puntero a la Corrutina Reader,
 un atributo delta_x que indica el tamaño de la celda y un atributo N que indica el tamaño de la matriz. Ademas,
 cuenta con un atributo matrix_real que es un puntero a la matriz real de la clase Matrix, un atributo matrix_imag
 que es un puntero a la matriz imaginaria de la clase Matrix y un atributo matrix_peso que es un puntero a la matriz

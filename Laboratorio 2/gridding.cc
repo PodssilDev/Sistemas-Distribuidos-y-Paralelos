@@ -119,12 +119,13 @@ public:
 
 
 /*
-La clase Reader es la encargada de leer el archivo de entrada y entregar las lineas de este a las tareas
-para su procesamiento. Esta clase es de tipo Mutex Coroutine y cuenta con un atributo ifstream que es el archivo
-de entrada. Ademas, cuenta con un atributo chunkSize que indica la cantidad de lineas que se le entregaran
-a cada tarea y un atributo numberOfTasks que indica la cantidad de tareas que se creadas. La clase cuenta
-con un metodo siguiente que es el encargado de entregar activar el main de la corrutina y un metodo main que es
-el encargado de leer el archivo y entregar las lineas a las tareas
+La Corrutina Reader es la encargada de leer el archivo de entrada y entregar las lineas de este a las tareas
+para su procesamiento. Esta clase es de tipo Mutex Coroutine para evitar problemas de concurrencia y cuenta 
+con un atributo ifstream que es el archivo de entrada. Ademas, cuenta con un atributo chunkSize que indica l
+a cantidad de lineas que se le entregaran a cada tarea y un atributo numberOfTasks que indica la cantidad de 
+tareas que se creadas. La clase cuenta con un metodo siguiente que es el encargado de entregar las lineas leidas
+y activar el main de la corrutina y un metodo main que es el encargado de leer el archivo y entregar las lineas 
+a las tareas
 */
 _Mutex _Coroutine Reader{
 public:
@@ -198,11 +199,11 @@ private:
 };
 
 /*
-La clase Gridder es la encargada de procesar los datos entregados por la clase Reader. Esta clase es de tipo
-_Task y cuenta con un atributo id que indica el id de la tarea, un atributo r que es un puntero a la clase Reader,
+La Tarea Gridder es la encargada de procesar los datos entregados por la Corrutina Reader. Esta clase es de tipo
+_Task y cuenta con un atributo id que indica el id de la tarea, un atributo r que es un puntero a la Corrutina Reader,
 un atributo delta_x que indica el tamaño de la celda, un atributo N que indica el tamaño de la matriz y un atributo
 m que es un puntero a la clase Matrix. La clase cuenta con un metodo main que es el encargado de procesar los datos
-entregados por la clase Reader
+entregados por la Corrutina Reader
 */
 _Task Gridder{
 public:
