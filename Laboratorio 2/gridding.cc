@@ -328,6 +328,13 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
         }
     }
+
+    // Se verifican que los argumentos sean validos
+    if(input_file == "" || output_directory == "" || delta_x <= 0.0 || N <= 0 || chunk_size <= 0 || num_tasks <= 0){
+        fprintf(stderr,  "Faltan argumentos o argumentos inválidos.\n");
+        exit(EXIT_FAILURE);
+    }
+
     // Se abre el archivo de entrada
     ifstream archivo(input_file.c_str());
     if (!archivo.is_open()) { //

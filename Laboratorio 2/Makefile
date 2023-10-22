@@ -1,5 +1,6 @@
 all: gridding gridding_matriz_propia
 
+# NOTA: Si se quiere correr en el clutser cambiar 0.003 a 0,003.
 # Ejemplos matriz compartida
 run:
 	./gridding -i hltau_completo_uv.csv -o datosgrideados -d 0.003 -N 2048 -c 1000 -t 1
