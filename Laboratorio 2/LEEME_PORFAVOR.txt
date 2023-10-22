@@ -1,0 +1,14 @@
+El código fue probado en el Cluster del DIINF, sin embargo, al probarlo por algún motivo tiraba un error
+de "Division by zero". Tras intentar varias cosas, el problema se solucionó cambiando el valor de delta x
+de 0.003 a 0,003. Personalmente, desconozco porque se soluciona así. Lo anterior se menciona en el informe
+y se proporcionan pruebas en el anexo del informe de que el código si fue probado en el cluster.
+
+gridding.cc corresponde a la solución de la matriz compartida.
+
+gridding_matriz_propia.cc corresponde a la solución de la matriz propia.
+
+El makefile compila ambos archivos y se tienen varios ejemplos de prueba, los cuales fueron probados en el cluster.
+
+Se incluye el archivo de MATLAB que fue utilizado para comprobar las imágenes resultantes.
+
+- John Serrano Carrasco.
