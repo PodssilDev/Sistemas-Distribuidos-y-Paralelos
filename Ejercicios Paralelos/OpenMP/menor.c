@@ -87,7 +87,7 @@ int main(int argc, char const *argv[])
         //  han terminado de ejecutar la sección crítica, por tanto, es necesaria una barrera
         //  para obtener el verdadero valor del mínimo global.
         //  Verifiquen las diferencias al ejecutar con la siguiente linea comentada y sin comentar
-        //#pragma omp barrier
+        #pragma omp barrier
 
         //Solo una hebra ejecuta esta acción. No indica cuál será.
         #pragma omp single
