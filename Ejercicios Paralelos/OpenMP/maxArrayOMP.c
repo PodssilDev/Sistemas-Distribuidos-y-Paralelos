@@ -24,17 +24,14 @@ int main() {
 
     #pragma omp parallel num_threads(H) // Inicio de la región paralela
     {
-        #pragma omp single // Se ejecuta una sola vez para crear las tasks
-        {
-            #pragma omp taskloop num_tasks(T) // Creación de las tasks
-            for (int i = 0; i < N; i++) {
-                #pragma omp critical // Sección crítica para actualizar el valor máximo
-                {
-                    if (arr[i] > max_value) {
-                        max_value = arr[i];
-                    }
+        #pragma omp for
+        for(int i = 0; i < N; i++){
+            #pragma omp task // Inicio de la tarea
+            {
+                if (arr[i] > max_value) {
+                    max_value = arr[i];
                 }
-            }
+            } // Fin de la tarea
         }
     }
     // Imprimir el valor máximo encontrado
