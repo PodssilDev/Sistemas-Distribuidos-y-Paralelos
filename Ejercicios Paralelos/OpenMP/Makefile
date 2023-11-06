@@ -1,4 +1,4 @@
-all: HelloWorldOMP PEP1_2021OMP menor reduction simple integral maxArrayOMP promedioOMP forloopOMP
+all: HelloWorldOMP PEP1_2021OMP menor reduction simple integral maxArrayOMP promedioOMP forloopOMP forReductionOMP
 
 HelloWorldOMP: HelloWorldOMP.c
 	gcc -o HelloWorldOMP HelloWorldOMP.c -fopenmp
@@ -27,5 +27,8 @@ promedioOMP: promedioOMP.c
 forloopOMP: forloopOMP.c
 	gcc -o forloopOMP forloopOMP.c -fopenmp
 
+forReductionOMP: forReductionOMP.c
+	gcc -o forReductionOMP forReductionOMP.c -fopenmp
+
 clean:
-	rm -f HelloWorldOMP PEP1_2021OMP menor reduction simple integral maxArrayOMP promedioOMP forloopOMP
+	rm -f HelloWorldOMP PEP1_2021OMP menor reduction simple integral maxArrayOMP promedioOMP forloopOMP forReductionOMP
