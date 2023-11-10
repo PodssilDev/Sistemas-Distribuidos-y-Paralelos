@@ -5,13 +5,12 @@
 #include <math.h>
 #include <string.h>
 
-
 /*
 Laboratorio 3 - Sistemas Distribuidos y paralelos 13329 2-2023
 Autor: John Serrano Carrasco
 */
 
-// Definciion de constante
+// Defincion de constantes
 const float LIGHT_SPEED = 299792458;
 const float PI = 3.14159265358979323846;
 
@@ -35,7 +34,8 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
     int comp = 0;
     int cont = 0;
     double delta_v = delta_u;
-
+    
+    double t0 = omp_get_wtime();
     #pragma omp parallel
     {
         #pragma omp single
@@ -96,7 +96,7 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                         }
                         cont_linea = 0;
                     }
-                    printf("Se termino de procesar el archivo.\n");
+                    //printf("Se termino de procesar el archivo.\n");
                     #pragma omp critical
                     {
                         for(int i = 0; i < N; i++){
@@ -122,39 +122,37 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                     }
                 }
             }
-            char* output_directory_1 = "datosgrideadosr_mp.raw";
-            char* output_directory_2 = "datosgrideadosi_mp.raw";
-
-            FILE *outputFile_1 = fopen(output_directory_1, "wb");
-            if(outputFile_1 == NULL){
-                fprintf(stderr, "Error al abrir el archivo de salida.\n");
-                exit(EXIT_FAILURE);
-            }
-
-            for (int i = 0; i < N; i++) {
-                fwrite(matriRFinal[i], sizeof(double), N, outputFile_1);
-            }
-
-            fclose(outputFile_1);
-
-            printf("Se termino de escribir el archivo.\n");
-
-            //output_directory_2 = strcat(output_directory_2, "i.raw");
-
-            FILE *outputFile_2 = fopen(output_directory_2, "wb");
-            if(outputFile_2 == NULL){
-                fprintf(stderr, "Error al abrir el archivo de salida.\n");
-                exit(EXIT_FAILURE);
-            }
-            for (int i = 0; i < N; i++) {
-                fwrite(matriIFinal[i], sizeof(double), N, outputFile_2);
-            }
-            fclose(outputFile_2);
-            printf("Se termino de escribir el archivo.\n");
         }
     }
-
+    double t1 = omp_get_wtime();
+    double ex_time = t1 - t0;
+    printf("Tiempo del proceso de gridding con matriz local: %lf [s]\n", ex_time);
+    char* output_directory_1 = "datosgrideadosr_mp.raw";
+    char* output_directory_2 = "datosgrideadosi_mp.raw";
+    
+    FILE *outputFile_1 = fopen(output_directory_1, "wb");
+    if(outputFile_1 == NULL){
+        fprintf(stderr, "Error al abrir el archivo de salida.\n");
+        exit(EXIT_FAILURE);
+    }
+    for (int i = 0; i < N; i++) {
+        fwrite(matriRFinal[i], sizeof(double), N, outputFile_1);
+    }
+    fclose(outputFile_1);
+    printf("Se termino de escribir el archivo.\n");
+    //output_directory_2 = strcat(output_directory_2, "i.raw");
+    FILE *outputFile_2 = fopen(output_directory_2, "wb");
+    if(outputFile_2 == NULL){
+        fprintf(stderr, "Error al abrir el archivo de salida.\n");
+        exit(EXIT_FAILURE);
+    }
+    for (int i = 0; i < N; i++) {
+        fwrite(matriIFinal[i], sizeof(double), N, outputFile_2);
+    }
+    fclose(outputFile_2);
+    printf("Se termino de escribir el archivo de salida.\n");
 }
+
 
 void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size, int num_tasks, char *output_directory){
     double **matriR = (double **)calloc(N, sizeof(double *));
@@ -176,7 +174,8 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
     int comp = 0;
     int cont = 0;
     double delta_v = delta_u;
-
+    
+    double t0 = omp_get_wtime();
     #pragma omp parallel
     {
         #pragma omp single
@@ -226,7 +225,7 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
                         }
                         cont_linea = 0;
                     }
-                    printf("Se termino de procesar el archivo.\n");
+                    //printf("Se termino de procesar el archivo.\n");
                 }
             }
         }
@@ -242,39 +241,39 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
                     }
                 }
             }
-            char* output_directory_1 = "datosgrideadosr.raw";
-            char* output_directory_2 = "datosgrideadosi.raw";
-
-            FILE *outputFile_1 = fopen(output_directory_1, "wb");
-            if(outputFile_1 == NULL){
-                fprintf(stderr, "Error al abrir el archivo de salida.\n");
-                exit(EXIT_FAILURE);
-            }
-
-            for (int i = 0; i < N; i++) {
-                fwrite(matriR[i], sizeof(double), N, outputFile_1);
-            }
-
-            fclose(outputFile_1);
-
-            printf("Se termino de escribir el archivo.\n");
-
-            //output_directory_2 = strcat(output_directory_2, "i.raw");
-
-            FILE *outputFile_2 = fopen(output_directory_2, "wb");
-            if(outputFile_2 == NULL){
-                fprintf(stderr, "Error al abrir el archivo de salida.\n");
-                exit(EXIT_FAILURE);
-            }
-            for (int i = 0; i < N; i++) {
-                fwrite(matriI[i], sizeof(double), N, outputFile_2);
-            }
-            fclose(outputFile_2);
-            printf("Se termino de escribir el archivo.\n");
-            fclose(inputFile);
         }
     }
+    double t1 = omp_get_wtime();
+    double ex_time = t1 - t0;
 
+    printf("Tiempo del proceso de gridding con matriz compartida: %lf [s]\n", ex_time);
+
+    char* output_directory_1 = "datosgrideadosr.raw";
+    char* output_directory_2 = "datosgrideadosi.raw";
+    
+    FILE *outputFile_1 = fopen(output_directory_1, "wb");
+    if(outputFile_1 == NULL){
+        fprintf(stderr, "Error al abrir el archivo de salida.\n");
+        exit(EXIT_FAILURE);
+    }
+    for (int i = 0; i < N; i++) {
+        fwrite(matriR[i], sizeof(double), N, outputFile_1);
+    }
+    fclose(outputFile_1);
+    printf("Se termino de escribir el archivo.\n");
+    //output_directory_2 = strcat(output_directory_2, "i.raw");
+    
+    FILE *outputFile_2 = fopen(output_directory_2, "wb");
+    if(outputFile_2 == NULL){
+        fprintf(stderr, "Error al abrir el archivo de salida.\n");
+        exit(EXIT_FAILURE);
+    }
+    for (int i = 0; i < N; i++) {
+        fwrite(matriI[i], sizeof(double), N, outputFile_2);
+    }
+    fclose(outputFile_2);
+    printf("Se termino de escribir el archivo.\n");
+    fclose(inputFile);
 }
 
 int main(int argc, char *argv[]){
