@@ -6,7 +6,7 @@
 #include <string.h>
 
 /*
-Laboratorio 3 - Sistemas Distribuidos y paralelos 13329 2-2023
+Laboratorio 3 - Sistemas Distribuidos y Paralelos 13329 2-2023
 Autor: John Serrano Carrasco
 */
 
@@ -30,22 +30,13 @@ de la parte real y la parte imaginaria y se imprime el tiempo de ejecucion de la
 */
 void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size, int num_tasks, char *output_directory){
     // Matriz global de la parte real
-    double **matriR = (double **)calloc(N, sizeof(double *));
-    for (int i = 0; i < N; i++) {
-        matriR[i] = (double *)calloc(N, sizeof(double));
-    }
+    double *matriR = calloc(N*N, sizeof(double));
 
     // Matriz gloabl de la parte imaginaria
-    double **matriI = (double **)calloc(N, sizeof(double *));
-    for (int i = 0; i < N; i++) {
-        matriI[i] = (double *)calloc(N, sizeof(double));
-    }
+    double *matriI = calloc(N*N, sizeof(double));
 
     // Matriz global del peso
-    double **matriW = (double **)calloc(N, sizeof(double *));
-    for (int i = 0; i < N; i++) {
-        matriW[i] = (double *)calloc(N, sizeof(double));
-    }
+    double *matriW = calloc(N*N, sizeof(double));
 
     double delta_v = delta_u; // Se obtiene el valor de delta_v
     double t0 = omp_get_wtime(); // Se registra el tiempo de inicio de la sección paralela
@@ -84,15 +75,15 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
                             i_k = round(u_k / delta_u) + (N/2); // Se calcula el valor de i_k
                             j_k = round(v_k / delta_v) + (N/2); // Se calcula el valor de j_k
                             // Se calculan los valores de la parte real, la parte imaginaria y el peso
-                            calculo_real = matriR[(int)i_k][(int)j_k] + (vr * w);
-                            calculo_imag = matriI[(int)i_k][(int)j_k] + (vi * w);
-                            calculo_peso = matriW[(int)i_k][(int)j_k] + w;
+                            calculo_real = matriR[(int)i_k * N + (int)j_k] + (vr * w);
+                            calculo_imag = matriI[(int)i_k * N + (int)j_k] + (vi * w);
+                            calculo_peso = matriW[(int)i_k * N + (int)j_k] + w;
                             #pragma omp critical // Seccion critica (Escritura en matrices compartidas)
                             {
                                 // Se escriben los valores calculados en las matrices compartidas
-                                matriR[(int)i_k][(int)j_k] = calculo_real;
-                                matriI[(int)i_k][(int)j_k] = calculo_imag;
-                                matriW[(int)i_k][(int)j_k] = calculo_peso;
+                                matriR[(int)i_k * N + (int)j_k] = calculo_real;
+                                matriI[(int)i_k * N + (int)j_k] = calculo_imag;
+                                matriW[(int)i_k * N + (int)j_k] = calculo_peso;
                             }
                         }
                         cont_linea = 0; // Se reinicia el contador de lineas
@@ -106,12 +97,10 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
         #pragma omp master // Solo la hebra maestra realiza la normalizacion de las matrices
         {
             // Se normalizan las matrices real e imaginaria
-            for(int i = 0; i < N; i++){
-                for(int j = 0; j < N; j++){
-                    if(matriW[i][j] != 0){
-                        matriR[i][j] = matriR[i][j] / matriW[i][j];
-                        matriI[i][j] = matriI[i][j] / matriW[i][j];
-                    }
+            for(int i = 0; i < N*N; i++){
+                if(matriW[i] != 0){
+                    matriR[i] = matriR[i] / matriW[i];
+                    matriI[i] = matriI[i] / matriW[i];
                 }
             }
         }
@@ -131,9 +120,7 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
         exit(EXIT_FAILURE);
     }
     // Se escriben los valores de la matriz real en el archivo de salida
-    for (int i = 0; i < N; i++) {
-        fwrite(matriR[i], sizeof(double), N, outputFile_1);
-    }
+    fwrite(matriR, sizeof(double), N*N, outputFile_1);
     fclose(outputFile_1); // Se cierra el archivo de salida de la parte real
     printf("Finalizo la escritura del archivo de salida de la parte real (Matriz global).\n");
     
@@ -144,18 +131,11 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
         exit(EXIT_FAILURE);
     }
     // Se escriben los valores de la matriz imaginaria en el archivo de salida
-    for (int i = 0; i < N; i++) {
-        fwrite(matriI[i], sizeof(double), N, outputFile_2);
-    }
+    fwrite(matriI, sizeof(double), N*N, outputFile_2);
     fclose(outputFile_2); // Se cierra el archivo de salida de la parte imaginaria
     printf("Finalizo la escritura del archivo de salida de la parte imaginaria (Matriz global).\n");
 
     // Liberacion de memoria
-    for(int i = 0; i < N; i++){
-        free(matriR[i]);
-        free(matriI[i]);
-        free(matriW[i]);
-    }
     free(matriR);
     free(matriI);
     free(matriW);
@@ -177,21 +157,13 @@ de la parte real y la parte imaginaria y se imprime el tiempo de ejecucion de la
 */
 void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size, int num_tasks, char *output_directory){
     // Se crea una matriz compartida de la parte real, donde se guardaran los valores de las matrices locales
-    double **matriRFinal = (double **)calloc(N, sizeof(double *));
-    for (int i = 0; i < N; i++) {
-        matriRFinal[i] = (double *)calloc(N, sizeof(double));
-    }
+    double *matriRFinal = calloc(N*N, sizeof(double));
+
     // Se crea una matriz compartida de la parte imaginaria, donde se guardaran los valores de las matrices locales
-    double **matriIFinal = (double **)calloc(N, sizeof(double *));
-    for (int i = 0; i < N; i++) {
-        matriIFinal[i] = (double *)calloc(N, sizeof(double));
-    }
+    double *matriIFinal = calloc(N*N, sizeof(double));
 
     // Se crea una matriz compartida del peso, donde se guardaran los valores de las matrices locales
-    double **matriWFinal = (double **)calloc(N, sizeof(double *));
-    for (int i = 0; i < N; i++) {
-        matriWFinal[i] = (double *)calloc(N, sizeof(double));
-    }
+    double *matriWFinal = calloc(N*N, sizeof(double));
 
     double delta_v = delta_u; // Se obtiene el valor de delta_v
     
@@ -205,21 +177,15 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                 {
                     // Cada tarea crea sus propias matrices privadas
                     // Se crea una matriz privada de la parte real
-                    double **matriR = (double **)calloc(N, sizeof(double *));
-                    for (int i = 0; i < N; i++) {
-                        matriR[i] = (double *)calloc(N, sizeof(double));
-                    }
+                    double *matriR = calloc(N*N, sizeof(double));
+
                     // Se crea una matriz privada de la parte imaginaria
-                    double **matriI = (double **)calloc(N, sizeof(double *));
-                    for (int i = 0; i < N; i++) {
-                        matriI[i] = (double *)calloc(N, sizeof(double));
-                    }
+                    double *matriI = calloc(N*N, sizeof(double));
+                    
                     // Se crea una matriz privada del peso
-                    double **matriW = (double **)calloc(N, sizeof(double *));
-                    for (int i = 0; i < N; i++) {
-                        matriW[i] = (double *)calloc(N, sizeof(double));
-                    }
+                    double *matriW = calloc(N*N, sizeof(double));
                     // Declaracion de variables privadas para cada tarea
+
                     double u_k, v_k, w_x, vr, vi, w, frec, ce; 
                     double i_k, j_k, calculo_real, calculo_imag, calculo_peso;
                     int cont_linea = 0;
@@ -248,27 +214,29 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                             j_k = round(v_k / delta_v) + (N/2); // Se calcula el valor de j_k
 
                             // Se calculan los valores de la parte real, la parte imaginaria y el peso
-                            calculo_real = matriR[(int)i_k][(int)j_k] + (vr * w); 
-                            calculo_imag = matriI[(int)i_k][(int)j_k] + (vi * w);
-                            calculo_peso = matriW[(int)i_k][(int)j_k] + w;
+                            calculo_real = matriR[(int)i_k * N + (int)j_k] + (vr * w); 
+                            calculo_imag = matriI[(int)i_k * N + (int)j_k] + (vi * w);
+                            calculo_peso = matriW[(int)i_k * N + (int)j_k] + w;
 
                             // Se escriben los valores calculados en las matrices privadas
-                            matriR[(int)i_k][(int)j_k] = calculo_real;
-                            matriI[(int)i_k][(int)j_k] = calculo_imag;
-                            matriW[(int)i_k][(int)j_k] = calculo_peso;
+                            matriR[(int)i_k * N + (int)j_k] = calculo_real;
+                            matriI[(int)i_k * N + (int)j_k] = calculo_imag;
+                            matriW[(int)i_k * N + (int)j_k] = calculo_peso;
                         }
                         cont_linea = 0; // Se reinicia el contador de lineas
                     }
                     #pragma omp critical // Seccion critica (Escritura en matrices compartidas)
                     {
                         // Se suman los valores de las matrices privadas a las matrices compartidas
-                        for(int i = 0; i < N; i++){
-                            for(int j = 0; j < N; j++){
-                                matriRFinal[i][j] += matriR[i][j];
-                                matriIFinal[i][j] += matriI[i][j];
-                                matriWFinal[i][j] += matriW[i][j];
-                            }
+                        for(int i = 0; i < N*N; i++){
+                            matriRFinal[i] += matriR[i];
+                            matriIFinal[i] += matriI[i];
+                            matriWFinal[i] += matriW[i];
                         }
+                        // Cada tarea libera la memoria de sus matrices privadas
+                        free(matriR);
+                        free(matriI);
+                        free(matriW);
                     }
                 }
             }
@@ -278,13 +246,12 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
         #pragma omp master // Solo la hebra maestra realiza la normalizacion de las matrices
         {
             // Se normalizan las matrices real e imaginaria
-            for(int i = 0; i < N; i++){
-                for(int j = 0; j < N; j++){
-                    if(matriWFinal[i][j] != 0){
-                        matriRFinal[i][j] = matriRFinal[i][j] / matriWFinal[i][j];
-                        matriIFinal[i][j] = matriIFinal[i][j] / matriWFinal[i][j];
-                    }
+            for(int i = 0; i < N*N; i++){
+                if(matriWFinal[i] != 0){
+                    matriRFinal[i] = matriRFinal[i] / matriWFinal[i];
+                    matriIFinal[i] = matriIFinal[i] / matriWFinal[i];
                 }
+                
             }
         }
     }
@@ -303,9 +270,8 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
         exit(EXIT_FAILURE);
     }
     // Se escriben los valores de la matriz real en el archivo de salida
-    for (int i = 0; i < N; i++) {
-        fwrite(matriRFinal[i], sizeof(double), N, outputFile_1);
-    }
+    fwrite(matriRFinal, sizeof(double), N*N, outputFile_1);
+    
     fclose(outputFile_1); // Se cierra el archivo de salida de la parte real
     printf("Finalizo la escritura del archivo de salida de la parte real (Matriz local)\n");
 
@@ -316,18 +282,12 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
         exit(EXIT_FAILURE);
     }
     // Se escriben los valores de la matriz imaginaria en el archivo de salida
-    for (int i = 0; i < N; i++) {
-        fwrite(matriIFinal[i], sizeof(double), N, outputFile_2);
-    }
+    fwrite(matriIFinal, sizeof(double), N*N, outputFile_2);
+    
     fclose(outputFile_2); // Se cierra el archivo de salida de la parte imaginaria
     printf("Finalizo la escritura del archivo de salida de la parte imaginaria (Matriz local)\n");
 
     // Liberacion de memoria
-    for(int i = 0; i < N; i++){
-        free(matriRFinal[i]);
-        free(matriIFinal[i]);
-        free(matriWFinal[i]);
-    }
     free(matriRFinal);
     free(matriIFinal);
     free(matriWFinal);
