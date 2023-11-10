@@ -8,6 +8,10 @@
 /*
 Laboratorio 3 - Sistemas Distribuidos y Paralelos 13329 2-2023
 Autor: John Serrano Carrasco
+
+NOTA: Esta es la version secuencial del programa gridding.c, sin hebras, ni tareas, ni OMP.
+Fue creado SOLO para poder comparar los tiempos de ejecucion con la version paralela.
+
 */
 
 // Defincion de constantes
@@ -23,23 +27,23 @@ Entradas:
     - chunk_size: Tamaño del chunk
     - output_directory: Nombre del archivo de salida
 Salidas: Ninguna (void) aunque se escriben dos archivos de salida y se imprime el tiempo de ejecucion de la sección paralela
-Descripcion: Esta funcion realiza el proceso de gridding con matrices globales. Se crean tres una matrices globales que son compartidas 
-por todas las las tareas y se realiza el proceso de gridding sobre estas matrices. Al finalizar se escriben los archivos de salida
-de la parte real y la parte imaginaria y se imprime el tiempo de ejecucion de la sección paralela.
+Descripcion: Esta funcion realiza el proceso de gridding con tres matrices, una para la parte real, otra para la parte imaginaria 
+y otra para el peso. Se lee el archivo de entrada y se guardan los valores en las matrices. Luego se normalizan las
+matrices y se escriben los valores en dos archivos de salida.
 */
 void gridding(FILE* inputFile, double delta_u, int N, int chunk_size, char *output_directory){
-    // Matriz global de la parte real
+    // Matriz de la parte real
     double *matriR = calloc(N*N, sizeof(double));
 
-    // Matriz gloabl de la parte imaginaria
+    // Matriz de la parte imaginaria
     double *matriI = calloc(N*N, sizeof(double));
 
-    // Matriz global del peso
+    // Matriz del peso
     double *matriW = calloc(N*N, sizeof(double));
 
     double delta_v = delta_u; // Se obtiene el valor de delta_v
-    clock_t t0 = clock(); // Se registra el tiempo de inicio de la sección paralela
-    // Declaracion de variables privadas para cada tarea
+    clock_t t0 = clock(); // Se registra el tiempo de inicio del proceso de gridding
+    // Declaracion de variables
     double u_k, v_k, w_x, vr, vi, w, frec, ce; 
     double i_k, j_k, calculo_real, calculo_imag, calculo_peso;
     int cont_linea = 0;
@@ -82,10 +86,10 @@ void gridding(FILE* inputFile, double delta_u, int N, int chunk_size, char *outp
             matriI[i] = matriI[i] / matriW[i];
         }
     }
-    clock_t t1 = clock(); // Se registra el tiempo de finalizacion de la sección paralela
+    clock_t t1 = clock(); // Se registra el tiempo de finalizacion del proceso de gridding
 
-    double ex_time = ((double)(end_s - start_s)) / (double)CLOCKS_PER_SEC;
-    printf("Tiempo del proceso de gridding con matriz compartida: %lf [s]\n", ex_time);
+    double ex_time = ((double)(t1 - t0)) / (double)CLOCKS_PER_SEC;
+    printf("Tiempo del proceso de gridding: %lf [s]\n", ex_time);
 
     char* output_directory_1 = "datosgrideadosr.raw";
     char* output_directory_2 = "datosgrideadosi.raw";
@@ -93,24 +97,24 @@ void gridding(FILE* inputFile, double delta_u, int N, int chunk_size, char *outp
     // Se crea el archivo de salida de la parte real
     FILE *outputFile_1 = fopen(output_directory_1, "wb");
     if(outputFile_1 == NULL){
-        fprintf(stderr, "Error al abrir el archivo de salida de la parte real (Matriz global).\n");
+        fprintf(stderr, "Error al abrir el archivo de salida de la parte real.\n");
         exit(EXIT_FAILURE);
     }
     // Se escriben los valores de la matriz real en el archivo de salida
     fwrite(matriR, sizeof(double), N*N, outputFile_1);
     fclose(outputFile_1); // Se cierra el archivo de salida de la parte real
-    printf("Finalizo la escritura del archivo de salida de la parte real (Matriz global).\n");
+    printf("Finalizo la escritura del archivo de salida de la parte real.\n");
     
     // Se crea el archivo de salida de la parte imaginaria
     FILE *outputFile_2 = fopen(output_directory_2, "wb");
     if(outputFile_2 == NULL){
-        fprintf(stderr, "Error al abrir el archivo de salida de la parte imaginaria (Matriz gloal).\n");
+        fprintf(stderr, "Error al abrir el archivo de salida de la parte imaginaria.\n");
         exit(EXIT_FAILURE);
     }
     // Se escriben los valores de la matriz imaginaria en el archivo de salida
     fwrite(matriI, sizeof(double), N*N, outputFile_2);
     fclose(outputFile_2); // Se cierra el archivo de salida de la parte imaginaria
-    printf("Finalizo la escritura del archivo de salida de la parte imaginaria (Matriz global).\n");
+    printf("Finalizo la escritura del archivo de salida de la parte imaginaria.\n");
 
     // Liberacion de memoria
     free(matriR);
@@ -157,7 +161,7 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);
     }
     
-    // Se abre el archivo de entrada a usar para el proceso de gridding con matriz global
+    // Se abre el archivo de entrada a usar para el proceso de gridding
     FILE* inputFile = fopen(input_file, "r");
     if(inputFile == NULL){
         fprintf(stderr, "Error al abrir el archivo de entrada.\n");
@@ -167,7 +171,7 @@ int main(int argc, char *argv[]){
     delta_x = (PI/(3600 * 180)) * delta_x; // Se calcula el valor de delta_x en radianes
     double delta_u = 1/(N*delta_x); // Se calcula el delta_u
 
-    // Se llama a la funcion que realiza el proceso de gridding con matriz global
+    // Se llama a la funcion que realiza el proceso de gridding
     gridding(inputFile, delta_u, N, chunk_size, output_directory);
 
     // Se cierran los archivos de entrada
