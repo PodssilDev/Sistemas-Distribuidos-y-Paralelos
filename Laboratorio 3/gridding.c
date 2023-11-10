@@ -16,9 +16,22 @@ const float LIGHT_SPEED = 299792458;
 const float PI = 3.14159265358979323846;
 
 void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size, int num_tasks, char *output_directory){
-    double *matriR = calloc(N*N, sizeof(double));
-    double *matriI = calloc(N*N, sizeof(double));
-    double *matriW = calloc(N*N, sizeof(double));
+    double **matriR = (double **)calloc(N, sizeof(double *));
+    for (int i = 0; i < N; i++) {
+        matriR[i] = (double *)calloc(N, sizeof(double));
+    }
+
+    // Crear matrizI
+    double **matriI = (double **)calloc(N, sizeof(double *));
+    for (int i = 0; i < N; i++) {
+        matriI[i] = (double *)calloc(N, sizeof(double));
+    }
+
+    // Crear matrizW
+    double **matriW = (double **)calloc(N, sizeof(double *));
+    for (int i = 0; i < N; i++) {
+        matriW[i] = (double *)calloc(N, sizeof(double));
+    }
     int comp = 0;
     int cont = 0;
     double delta_v = delta_u;
@@ -30,7 +43,7 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
             for(int i = 0; i < num_tasks; i++){
                 #pragma omp task firstprivate(chunk_size)
                 {
-                    double u_k, v_k, vr, vi, w, frec, ce; // Variables que se obtienen de la linea
+                    double u_k, v_k, w_x, vr, vi, w, frec, ce; // Variables que se obtienen de la linea
                     double i_k, j_k, calculo_real, calculo_imag, calculo_peso;
                     int cont_linea = 0;
                     while(feof(inputFile) == 0){
@@ -54,19 +67,20 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
                             cont += 1;
                             //printf("Linea numero: %d\n ", cont);
                             //printf("%s\n", readers[j]);
-                            sscanf(readers[j], "%lf %lf %lf %lf %lf %lf %lf", &u_k, &v_k, &vr, &vi, &w, &frec, &ce);
+                            int result = sscanf(readers[j], "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &u_k, &v_k, &w_x, &vr, &vi, &w, &frec, &ce);
                             u_k = u_k * (frec / LIGHT_SPEED);
                             v_k = v_k * (frec / LIGHT_SPEED);
                             i_k = round(u_k / delta_u) + (N/2);
+                            //printf("i_k: %lf\n", i_k);
                             j_k = round(v_k / delta_v) + (N/2);
-                            calculo_real = matriR[(int)i_k*N + (int)j_k] + (vr * w);
-                            calculo_imag = matriI[(int)i_k*N + (int)j_k] + (vi * w);
-                            calculo_peso = matriW[(int)i_k*N + (int)j_k] + w;
+                            calculo_real = matriR[(int)i_k][(int)j_k] + (vr * w);
+                            calculo_imag = matriI[(int)i_k][(int)j_k] + (vi * w);
+                            calculo_peso = matriW[(int)i_k][(int)j_k] + w;
                             #pragma omp critical
                             {
-                                matriR[(int)i_k*N + (int)j_k] = calculo_real;
-                                matriI[(int)i_k*N + (int)j_k] = calculo_imag;
-                                matriW[(int)i_k*N + (int)j_k] = calculo_peso;
+                                matriR[(int)i_k][(int)j_k] = calculo_real;
+                                matriI[(int)i_k][(int)j_k] = calculo_imag;
+                                matriW[(int)i_k][(int)j_k] = calculo_peso;
                             }
                         }
                         cont_linea = 0;
@@ -81,9 +95,9 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
         {
             for(int i = 0; i < N; i++){
                 for(int j = 0; j < N; j++){
-                    if(matriW[i*N + j] != 0){
-                        matriR[i*N + j] = matriR[i*N + j] / matriW[i*N + j];
-                        matriI[i*N + j] = matriI[i*N + j] / matriW[i*N + j];
+                    if(matriW[i][j] != 0){
+                        matriR[i][j] = matriR[i][j] / matriW[i][j];
+                        matriI[i][j] = matriI[i][j] / matriW[i][j];
                     }
                 }
             }
@@ -95,10 +109,9 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
                 fprintf(stderr, "Error al abrir el archivo de salida.\n");
                 exit(EXIT_FAILURE);
             }
-            for(int i = 0; i < N; i++){
-                for(int j = 0; j < N; j++){
-                    fwrite(&matriR[i*N + j], sizeof(double), 1, outputFile_1);
-                }
+
+            for (int i = 0; i < N; i++) {
+                fwrite(matriR[i], sizeof(double), N, outputFile_1);
             }
 
             fclose(outputFile_1);
@@ -112,16 +125,11 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
                 fprintf(stderr, "Error al abrir el archivo de salida.\n");
                 exit(EXIT_FAILURE);
             }
-            for(int i = 0; i < N; i++){
-                for(int j = 0; j < N; j++){
-                    fwrite(&matriI[i*N + j], sizeof(double), 1, outputFile_2);
-                }
+            for (int i = 0; i < N; i++) {
+                fwrite(matriI[i], sizeof(double), N, outputFile_2);
             }
             fclose(outputFile_2);
             printf("Se termino de escribir el archivo.\n");
-            free(matriR);
-            free(matriI);
-            free(matriW);
             fclose(inputFile);
         }
     }
