@@ -52,13 +52,15 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
                     double i_k, j_k, calculo_real, calculo_imag, calculo_peso;
                     int cont_linea = 0;
                     while(feof(inputFile) == 0){ // Mientras no se llegue al final del archivo
-                        char readBuffer[256]; // Buffer para leer las lineas del archivo
-                        char readers[chunk_size][256]; // Buffer para guardar las lineas del archivo
+                        char* readBuffer = NULL; // Buffer para leer las lineas del archivo
+                        char** readers = NULL; // Buffer para guardar las lineas del archivo
+                        size_t buffer = 0; // Tamaño de la linea (para getline)
                         #pragma omp critical // Seccion critica (lectura de archivo)
                         {
                             while(1){
-                                fgets(readBuffer, sizeof(readBuffer), inputFile); // Se lee una linea del archivo
-                                strcpy(readers[cont_linea], readBuffer); // Se guarda la linea en el buffer
+                                getline(&readBuffer, &buffer, inputFile); // Se lee una linea del archivo
+                                readers = (char **)realloc(readers, (cont_linea + 1) * sizeof(char *)); // Se aumenta el tamaño del buffer de lineas
+                                readers[cont_linea] = strdup(readBuffer); // Se guarda la linea en el buffer
                                 cont_linea += 1; // Se aumenta el contador de lineas
                                 if(cont_linea >= chunk_size) break; // Si se llega al tamaño del chunk se sale del ciclo
                                 if(feof(inputFile)){ // Si se llega al final del archivo se sale del ciclo
@@ -190,13 +192,15 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                     double i_k, j_k, calculo_real, calculo_imag, calculo_peso;
                     int cont_linea = 0;
                     while(feof(inputFile) == 0){ // Mientras no se llegue al final del archivo
-                        char readBuffer[256]; // Buffer para leer las lineas del archivo
-                        char readers[chunk_size][256]; // Buffer para guardar las lineas del archivo
+                        char* readBuffer = NULL; // Buffer para leer las lineas del archivo
+                        char** readers = NULL; // Buffer para guardar las lineas del archivo
+                        size_t buffer = 0; // Tamaño de la linea (para getline)
                         #pragma omp critical // Seccion critica (lectura de archivo)
                         {
                             while(1){
-                                fgets(readBuffer, sizeof(readBuffer), inputFile); // Se lee una linea del archivo
-                                strcpy(readers[cont_linea], readBuffer); // Se guarda la linea en el buffer
+                                getline(&readBuffer, &buffer, inputFile); // Se lee una linea del archivo
+                                readers = (char **)realloc(readers, (cont_linea + 1) * sizeof(char *)); // Se aumenta el tamaño del buffer de lineas
+                                readers[cont_linea] = strdup(readBuffer); // Se guarda la linea en el buffer
                                 cont_linea += 1; // Se aumenta el contador de lineas
                                 if(cont_linea >= chunk_size) break; // Si se llega al tamaño del chunk se sale del ciclo
                                 if(feof(inputFile)){ // Si se llega al final del archivo se sale del ciclo
