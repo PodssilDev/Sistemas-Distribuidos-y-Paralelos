@@ -62,8 +62,12 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
                                 readers = (char **)realloc(readers, (cont_linea + 1) * sizeof(char *)); // Se aumenta el tamaño del buffer de lineas
                                 readers[cont_linea] = strdup(readBuffer); // Se guarda la linea en el buffer
                                 cont_linea += 1; // Se aumenta el contador de lineas
-                                if(cont_linea >= chunk_size) break; // Si se llega al tamaño del chunk se sale del ciclo
+                                if(cont_linea >= chunk_size){
+                                    free(readBuffer); // Se libera la memoria del buffer de lectura
+                                    break;
+                                }
                                 if(feof(inputFile)){ // Si se llega al final del archivo se sale del ciclo
+                                    free(readBuffer); // Se libera la memoria del buffer de lectura
                                     break;
                                 }
                             }
@@ -89,8 +93,8 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
                             }
                         }
                         cont_linea = 0; // Se reinicia el contador de lineas
+                        free(readers); // Se libera la memoria del buffer de lectura
                     }
-
                 }
             }
         }
@@ -111,9 +115,13 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
 
     double ex_time = t1 - t0; // Se calcula el tiempo de ejecucion de la sección paralela
     printf("Tiempo del proceso de gridding con matriz compartida: %lf [s]\n", ex_time);
+    char output_directory_1[256];
+    char output_directory_2[256];
 
-    char* output_directory_1 = "datosgrideadosr.raw";
-    char* output_directory_2 = "datosgrideadosi.raw";
+    strcpy(output_directory_1, output_directory);
+    strcpy(output_directory_2, output_directory);
+    strcat(output_directory_1, "r.raw");
+    strcat(output_directory_2, "i.raw");
     
     // Se crea el archivo de salida de la parte real
     FILE *outputFile_1 = fopen(output_directory_1, "wb");
@@ -202,8 +210,12 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                                 readers = (char **)realloc(readers, (cont_linea + 1) * sizeof(char *)); // Se aumenta el tamaño del buffer de lineas
                                 readers[cont_linea] = strdup(readBuffer); // Se guarda la linea en el buffer
                                 cont_linea += 1; // Se aumenta el contador de lineas
-                                if(cont_linea >= chunk_size) break; // Si se llega al tamaño del chunk se sale del ciclo
+                                if(cont_linea >= chunk_size){
+                                    free(readBuffer); // Se libera la memoria del buffer de lectura
+                                    break;
+                                }
                                 if(feof(inputFile)){ // Si se llega al final del archivo se sale del ciclo
+                                    free(readBuffer); // Se libera la memoria del buffer de lectura
                                     break;
                                 }
                             }
@@ -211,7 +223,7 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                         
                         for(int j = 0; j < cont_linea; j++){ // Se comienza con el proceso de las lineas leidas
                             // Se guardan los valores de la linea en las variables
-                            int result = sscanf(readers[j], "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &u_k, &v_k, &w_x, &vr, &vi, &w, &frec, &ce);
+                            sscanf(readers[j], "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &u_k, &v_k, &w_x, &vr, &vi, &w, &frec, &ce);
                             u_k = u_k * (frec / LIGHT_SPEED); // Se calcula el valor de u_k
                             v_k = v_k * (frec / LIGHT_SPEED); // Se calcula el valor de v_k
                             i_k = round(u_k / delta_u) + (N/2); // Se calcula el valor de i_k
@@ -228,6 +240,7 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                             matriW[(int)i_k * N + (int)j_k] = calculo_peso;
                         }
                         cont_linea = 0; // Se reinicia el contador de lineas
+                        
                     }
                     #pragma omp critical // Seccion critica (Escritura en matrices compartidas)
                     {
@@ -264,8 +277,13 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
     double ex_time = t1 - t0; // Se calcula el tiempo de ejecucion de la sección paralela
     printf("Tiempo del proceso de gridding con matriz local: %lf [s]\n", ex_time);
 
-    char* output_directory_1 = "datosgrideadosr_mp.raw";
-    char* output_directory_2 = "datosgrideadosi_mp.raw";
+    char output_directory_1[256];
+    char output_directory_2[256];
+
+    strcpy(output_directory_1, output_directory);
+    strcpy(output_directory_2, output_directory);
+    strcat(output_directory_1, "r_mp.raw");
+    strcat(output_directory_2, "i_mp.raw");
     
     // Se crea el archivo de salida de la parte real
     FILE *outputFile_1 = fopen(output_directory_1, "wb");
@@ -357,11 +375,13 @@ int main(int argc, char *argv[]){
     delta_x = (PI/(3600 * 180)) * delta_x; // Se calcula el valor de delta_x en radianes
     double delta_u = 1/(N*delta_x); // Se calcula el delta_u
 
+
     // Se llama a la funcion que realiza el proceso de gridding con matriz global
     globalMatrixGridding(inputFile, delta_u, N, chunk_size, num_tasks, output_directory);
 
     // Se llama a la funcion que realiza el proceso de gridding con matriz local
     localMatrixGridding(inputFile2, delta_u, N, chunk_size, num_tasks, output_directory);
+
 
     // Se cierran los archivos de entrada
     fclose(inputFile);
