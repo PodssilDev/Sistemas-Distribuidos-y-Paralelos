@@ -174,22 +174,24 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
     char** readers = (char**) calloc(chunk_size, sizeof(char*)); // Buffer para guardar las lineas del archivo
     printf("CHUNK SIZE %d\n", chunk_size);
     double t0 = omp_get_wtime(); // Se registra el tiempo de inicio de la sección paralela
-    #pragma omp parallel
-    {
-        #pragma omp single
-        {
-            for(int i = 0; i < num_tasks; i++){ // Se crean las tareas
-                #pragma omp task
-                {
-                    // Cada tarea crea sus propias matrices privadas
-                    // Se crea una matriz privada de la parte real
+                        // Se crea una matriz privada de la parte real
                     double *matriR = calloc(N*N, sizeof(double));
 
                     // Se crea una matriz privada de la parte imaginaria
                     double *matriI = calloc(N*N, sizeof(double));
                     
                     // Se crea una matriz privada del peso
-                    double *matriW = calloc(N*N, sizeof(double));
+                    double *matriW = calloc(N*N, sizeof(double));    
+    #pragma omp parallel firstprivate(matriR, matriI, matriWz)
+    {
+
+        #pragma omp single
+        {
+            for(int i = 0; i < num_tasks; i++){ // Se crean las tareas
+                #pragma omp task
+                {
+                    // Cada tarea crea sus propias matrices privadas
+
                     // Declaracion de variables privadas para cada tarea
 
                     while(feof(inputFile) == 0){ 
@@ -211,8 +213,6 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                                 }
                             }
                         }
-                        
-                        
                         for(int j = 0; j < cont_linea; j++){ // Se comienza con el proceso de las lineas leidas
                             // Se guardan los valores de la linea en las variables
                             double u_k, v_k, w_x, vr, vi, w, frec, ce; 
@@ -231,31 +231,23 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                             matriW[index] += arr[4];
                         }
                     }
-                    #pragma omp critical // Seccion critica (Escritura en matrices compartidas)
-                    {
-                        // Se suman los valores de las matrices privadas a las matrices compartidas
-                        for(int i = 0; i < N*N; i++){
-                            matriRFinal[i] += matriR[i];
-                            matriIFinal[i] += matriI[i];
-                            matriWFinal[i] += matriW[i];
-                        }
-                        // Cada tarea libera la memoria de sus matrices privadas
-                    }
                 }
             }
         }
         #pragma omp taskwait // Se espera a que todas las tareas terminen
-        #pragma omp barrier // Se espera a que todas las tareas terminen
-        #pragma omp master // Solo la hebra maestra realiza la normalizacion de las matrices
-        {
             // Se normalizan las matrices real e imaginaria
-            for(int i = 0; i < N*N; i++){
-                if(matriWFinal[i] != 0){
-                    matriRFinal[i] = matriRFinal[i] / matriWFinal[i];
-                    matriIFinal[i] = matriIFinal[i] / matriWFinal[i];
-                }
-                
-            }
+        #pragma omp for
+        for(int i = 0; i < N*N; i++){
+            matriRFinal[i] += matriR[i];
+            matriIFinal[i] += matriI[i];
+            matriWFinal[i] += matriW[i];
+        }
+        #pragma omp for
+        for(int i = 0; i < N*N; i++){
+            if(matriWFinal[i] != 0){
+                matriRFinal[i] = matriRFinal[i] / matriWFinal[i];
+                matriIFinal[i] = matriIFinal[i] / matriWFinal[i];
+            }  
         }
     }
     double t1 = omp_get_wtime(); // Se registra el tiempo de finalizacion de la sección paralela
