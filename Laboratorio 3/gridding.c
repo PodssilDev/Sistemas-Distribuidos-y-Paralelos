@@ -177,26 +177,24 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
 
     double delta_v = delta_u; // Se obtiene el valor de delta_v
     char** readers = (char**) calloc(chunk_size, sizeof(char*)); // Buffer para guardar las lineas del archivo
-    
-    double t0 = omp_get_wtime(); // Se registra el tiempo de inicio de la sección paralela
-    #pragma omp parallel
+    //printf("CHUNK SIZE %d\n", chunk_size);
+    // Se crea una matriz privada de la parte real
+    double *matriR = calloc(N*N, sizeof(double));
+
+    // Se crea una matriz privada de la parte imaginaria
+    double *matriI = calloc(N*N, sizeof(double));
+                    
+    // Se crea una matriz privada del peso
+    double *matriW = calloc(N*N, sizeof(double));
+    double t0 = omp_get_wtime(); // Se registra el tiempo de inicio de la sección paralela 
+    #pragma omp parallel firstprivate(matriR, matriI, matriW)
     {
+
         #pragma omp single
         {
             for(int i = 0; i < num_tasks; i++){ // Se crean las tareas
                 #pragma omp task
                 {
-                    // Cada tarea crea sus propias matrices privadas
-                    // Se crea una matriz privada de la parte real
-                    double *matriR = calloc(N*N, sizeof(double));
-
-                    // Se crea una matriz privada de la parte imaginaria
-                    double *matriI = calloc(N*N, sizeof(double));
-                    
-                    // Se crea una matriz privada del peso
-                    double *matriW = calloc(N*N, sizeof(double));
-                    // Declaracion de variables privadas para cada tarea
-
                     while(feof(inputFile) == 0){ 
                         int cont_linea = 0;
                         char* readBuffer = NULL; // Buffer para leer las lineas del archivo
@@ -206,7 +204,6 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                             while(1){
                                 readers[cont_linea] = (char *) calloc(256, sizeof(char)); // Se aumenta el tamaño del buffer de lineas
                                 getline(&readers[cont_linea], &buffer, inputFile); // Se guarda la linea en el buffer
-                                //printf("%s", readers[cont_linea]);
                                 cont_linea += 1; // Se aumenta el contador de lineas
                                 if(cont_linea >= chunk_size){
                                     break;
@@ -216,55 +213,41 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                                 }
                             }
                         }
-                        
-                        
                         for(int j = 0; j < cont_linea; j++){ // Se comienza con el proceso de las lineas leidas
                             // Se guardan los valores de la linea en las variables
                             double u_k, v_k, w_x, vr, vi, w, frec, ce; 
-                            double i_k, j_k, calculo_real, calculo_imag, calculo_peso;
-                       
+                            
+                            double calculo_real, calculo_imag, calculo_peso;
                             sscanf(readers[j], "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &u_k, &v_k, &w_x, &vr, &vi, &w, &frec, &ce);
-                            u_k = u_k * (frec / LIGHT_SPEED); // Se calcula el valor de u_k
-                            v_k = v_k * (frec / LIGHT_SPEED); // Se calcula el valor de v_k
-                            i_k = round(u_k / delta_u) + (N/2); // Se calcula el valor de i_k
-                            j_k = round(v_k / delta_v) + (N/2); // Se calcula el valor de j_k
+                            double arr[6] = {u_k, v_k, vr, vi, w, frec};
+  
+                            int i_k = round(arr[0] * (arr[5] / LIGHT_SPEED) / delta_u) + (N/2); // Se calcula el valor de i_k
+                            int j_k = round(arr[1] * (arr[5] / LIGHT_SPEED) / delta_u) + (N/2); // Se calcula el valor de i_k
                             // Se calculan los valores de la parte real, la parte imaginaria y el peso
-                            // Se escriben los valores calculados en las matrices privadas
-                            #pragma omp critical // Seccion critica (Escritura en matrices privadas)
-                            {
-                                matriR[(int)i_k * N + (int)j_k] += (vr * w);
-                                matriI[(int)i_k * N + (int)j_k] += (vi * w);
-                                matriW[(int)i_k * N + (int)j_k] += w;
-                            }
+                            int index = i_k * N + j_k;
+                            // Se escriben los valores calculados en las matrices compartidas
+                            matriR[index] += arr[2] * arr[4];
+                            matriI[index] += arr[3] * arr[4];
+                            matriW[index] += arr[4];
                         }
-                        
-                        
-                    }
-                    #pragma omp critical // Seccion critica (Escritura en matrices compartidas)
-                    {
-                        // Se suman los valores de las matrices privadas a las matrices compartidas
-                        for(int i = 0; i < N*N; i++){
-                            matriRFinal[i] += matriR[i];
-                            matriIFinal[i] += matriI[i];
-                            matriWFinal[i] += matriW[i];
-                        }
-                        // Cada tarea libera la memoria de sus matrices privadas
                     }
                 }
             }
         }
         #pragma omp taskwait // Se espera a que todas las tareas terminen
-        #pragma omp barrier // Se espera a que todas las tareas terminen
-        #pragma omp master // Solo la hebra maestra realiza la normalizacion de las matrices
-        {
-            // Se normalizan las matrices real e imaginaria
-            for(int i = 0; i < N*N; i++){
-                if(matriWFinal[i] != 0){
-                    matriRFinal[i] = matriRFinal[i] / matriWFinal[i];
-                    matriIFinal[i] = matriIFinal[i] / matriWFinal[i];
-                }
-                
-            }
+        #pragma omp for
+        for(int i = 0; i < N*N; i++){
+            matriRFinal[i] += matriR[i];
+            matriIFinal[i] += matriI[i];
+            matriWFinal[i] += matriW[i];
+        }
+        #pragma omp for
+        // Se normalizan las matrices real e imaginaria
+        for(int i = 0; i < N*N; i++){
+            if(matriWFinal[i] != 0){
+                matriRFinal[i] = matriRFinal[i] / matriWFinal[i];
+                matriIFinal[i] = matriIFinal[i] / matriWFinal[i];
+            }  
         }
     }
     double t1 = omp_get_wtime(); // Se registra el tiempo de finalizacion de la sección paralela
