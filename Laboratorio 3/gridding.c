@@ -63,11 +63,11 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
                                 readers[cont_linea] = strdup(readBuffer); // Se guarda la linea en el buffer
                                 cont_linea += 1; // Se aumenta el contador de lineas
                                 if(cont_linea >= chunk_size){
-                                    free(readBuffer); // Se libera la memoria del buffer de lectura
+                                    //free(readBuffer); // Se libera la memoria del buffer de lectura
                                     break;
                                 }
                                 if(feof(inputFile)){ // Si se llega al final del archivo se sale del ciclo
-                                    free(readBuffer); // Se libera la memoria del buffer de lectura
+                                    //free(readBuffer); // Se libera la memoria del buffer de lectura
                                     break;
                                 }
                             }
@@ -93,7 +93,7 @@ void globalMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size
                             }
                         }
                         cont_linea = 0; // Se reinicia el contador de lineas
-                        free(readers); // Se libera la memoria del buffer de lectura
+                        //free(readers); // Se libera la memoria del buffer de lectura
                     }
                 }
             }
@@ -176,6 +176,7 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
     double *matriWFinal = calloc(N*N, sizeof(double));
 
     double delta_v = delta_u; // Se obtiene el valor de delta_v
+    char** readers = (char**) calloc(chunk_size, sizeof(char*)); // Buffer para guardar las lineas del archivo
     
     double t0 = omp_get_wtime(); // Se registra el tiempo de inicio de la sección paralela
     #pragma omp parallel
@@ -196,50 +197,47 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                     double *matriW = calloc(N*N, sizeof(double));
                     // Declaracion de variables privadas para cada tarea
 
-                    double u_k, v_k, w_x, vr, vi, w, frec, ce; 
-                    double i_k, j_k, calculo_real, calculo_imag, calculo_peso;
-                    int cont_linea = 0;
-                    while(feof(inputFile) == 0){ // Mientras no se llegue al final del archivo
+                    while(feof(inputFile) == 0){ 
+                        int cont_linea = 0;
                         char* readBuffer = NULL; // Buffer para leer las lineas del archivo
-                        char** readers = NULL; // Buffer para guardar las lineas del archivo
                         size_t buffer = 0; // Tamaño de la linea (para getline)
                         #pragma omp critical // Seccion critica (lectura de archivo)
                         {
                             while(1){
-                                getline(&readBuffer, &buffer, inputFile); // Se lee una linea del archivo
-                                readers = (char **)realloc(readers, (cont_linea + 1) * sizeof(char *)); // Se aumenta el tamaño del buffer de lineas
-                                readers[cont_linea] = strdup(readBuffer); // Se guarda la linea en el buffer
+                                readers[cont_linea] = (char *) calloc(256, sizeof(char)); // Se aumenta el tamaño del buffer de lineas
+                                getline(&readers[cont_linea], &buffer, inputFile); // Se guarda la linea en el buffer
+                                //printf("%s", readers[cont_linea]);
                                 cont_linea += 1; // Se aumenta el contador de lineas
                                 if(cont_linea >= chunk_size){
-                                    free(readBuffer); // Se libera la memoria del buffer de lectura
                                     break;
                                 }
                                 if(feof(inputFile)){ // Si se llega al final del archivo se sale del ciclo
-                                    free(readBuffer); // Se libera la memoria del buffer de lectura
                                     break;
                                 }
                             }
                         }
                         
+                        
                         for(int j = 0; j < cont_linea; j++){ // Se comienza con el proceso de las lineas leidas
                             // Se guardan los valores de la linea en las variables
+                            double u_k, v_k, w_x, vr, vi, w, frec, ce; 
+                            double i_k, j_k, calculo_real, calculo_imag, calculo_peso;
+                       
                             sscanf(readers[j], "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &u_k, &v_k, &w_x, &vr, &vi, &w, &frec, &ce);
                             u_k = u_k * (frec / LIGHT_SPEED); // Se calcula el valor de u_k
                             v_k = v_k * (frec / LIGHT_SPEED); // Se calcula el valor de v_k
                             i_k = round(u_k / delta_u) + (N/2); // Se calcula el valor de i_k
                             j_k = round(v_k / delta_v) + (N/2); // Se calcula el valor de j_k
-
                             // Se calculan los valores de la parte real, la parte imaginaria y el peso
-                            calculo_real = matriR[(int)i_k * N + (int)j_k] + (vr * w); 
-                            calculo_imag = matriI[(int)i_k * N + (int)j_k] + (vi * w);
-                            calculo_peso = matriW[(int)i_k * N + (int)j_k] + w;
-
                             // Se escriben los valores calculados en las matrices privadas
-                            matriR[(int)i_k * N + (int)j_k] = calculo_real;
-                            matriI[(int)i_k * N + (int)j_k] = calculo_imag;
-                            matriW[(int)i_k * N + (int)j_k] = calculo_peso;
+                            #pragma omp critical // Seccion critica (Escritura en matrices privadas)
+                            {
+                                matriR[(int)i_k * N + (int)j_k] += (vr * w);
+                                matriI[(int)i_k * N + (int)j_k] += (vi * w);
+                                matriW[(int)i_k * N + (int)j_k] += w;
+                            }
                         }
-                        cont_linea = 0; // Se reinicia el contador de lineas
+                        
                         
                     }
                     #pragma omp critical // Seccion critica (Escritura en matrices compartidas)
@@ -251,9 +249,6 @@ void localMatrixGridding(FILE* inputFile, double delta_u, int N, int chunk_size,
                             matriWFinal[i] += matriW[i];
                         }
                         // Cada tarea libera la memoria de sus matrices privadas
-                        free(matriR);
-                        free(matriI);
-                        free(matriW);
                     }
                 }
             }
