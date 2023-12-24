@@ -29,7 +29,7 @@ image = np.fft.ifftshift(np.fft.ifft2(np.fft.fftshift(grid)))
 
 
 fig , ax = plt.subplots(nrows=1, ncols=2, figsize=(15,10))
-ax[0].imshow(np.abs(grid), cmap="twilight_shifted")
+ax[0].imshow(np.abs(grid), origin = "lower", cmap="twilight_shifted")
 ax[1].imshow(image.real,origin ="lower", cmap="magma")
 fig.suptitle('Results (Hltau)', fontsize=17)
 ax[0].set_title("Gridded data image")
