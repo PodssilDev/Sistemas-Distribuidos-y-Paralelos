@@ -11,8 +11,8 @@ Se tienen dos soluciones:
 
 
 ## Requisitos
-* [uC++](https://github.com/pabuhr/uCPP), para ejecutar los archivos .cc, que realizan la lectura y el procesamiento del archivo que contiene los datos.
-* [Matlab](https://www.mathworks.com/products/matlab.html), para ejecutar el archivo que permite leer el resultado del proceso de grideo y obtener las imágenes resultantes.
+* [uC++](https://github.com/pabuhr/uCPP), para ejecutar los archivos .cc, que realizan la lectura y el procesamiento del archivo que contiene los datos. Ambas soluciones retornan dos archivos .raw, cada uno correspondiente a la parte real e imaginaria de los datos. Estos archivos deben ser leidos con el archivo [comprobar_solucion.m](https://github.com/PodssilDev/Sistemas-Distribuidos-y-Paralelos/blob/main/Laboratorio%202/comprobar_solucion.m)
+* [Matlab](https://www.mathworks.com/products/matlab.html), para ejecutar el archivo [comprobar_solucion.m](https://github.com/PodssilDev/Sistemas-Distribuidos-y-Paralelos/blob/main/Laboratorio%202/comprobar_solucion.m) que permite leer los archivos resultantes del proceso de grideo y obtener las imágenes resultantes.
 * [hltau_completo_uv.csv](https://drive.google.com/file/d/1B3BNwQ4oNM6T-G7mq3radrS15ZuiW15v/view?usp=sharing), el cual es el archivo que contiene los datos a leer y procesar.
 
 ## Resultados
